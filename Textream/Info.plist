@@ -8,14 +8,14 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>Textream Document</string>
+			<string>NotchCue Document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>dev.fka.textream.document</string>
+				<string>app.notchcue.document</string>
 			</array>
 		</dict>
 	</array>
@@ -28,14 +28,14 @@
 				<string>public.data</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>Textream Document</string>
+			<string>NotchCue Document</string>
 			<key>UTTypeIdentifier</key>
-			<string>dev.fka.textream.document</string>
+			<string>app.notchcue.document</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
 				<array>
-					<string>textream</string>
+					<string>notchcue</string>
 				</array>
 			</dict>
 		</dict>
@@ -44,10 +44,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>dev.fka.textream</string>
+			<string>app.notchcue.mac</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>textream</string>
+				<string>notchcue</string>
 			</array>
 		</dict>
 	</array>
@@ -57,12 +57,12 @@
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>Read in Textream</string>
+				<string>Read in 刘海提词</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>readInTextream</string>
 			<key>NSPortName</key>
-			<string>Textream</string>
+			<string>NotchCue</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>public.utf8-plain-text</string>

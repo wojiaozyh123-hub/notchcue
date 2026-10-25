@@ -16,7 +16,7 @@ extension Notification.Name {
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let lifecycleLogger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "dev.fka.textream",
+        subsystem: Bundle.main.bundleIdentifier ?? "app.notchcue.mac",
         category: "AppLifecycle"
     )
 
@@ -41,12 +41,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if TextreamService.shared.launchedExternally {
             TextreamService.shared.hideMainWindow()
         }
-
-        #if !APP_STORE
-        // Direct-download builds check GitHub for updates. App Store builds are
-        // updated exclusively through the App Store.
-        UpdateChecker.shared.checkForUpdates(silent: true)
-        #endif
 
         // Start browser server if enabled
         TextreamService.shared.updateBrowserServer()
@@ -124,7 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls {
-            if url.pathExtension == "textream" {
+            if TextreamService.isDocumentURL(url) {
                 TextreamService.shared.openFileAtURL(url)
                 // Show the main window for file opens
                 for window in NSApp.windows where !(window is NSPanel) {
@@ -152,7 +146,7 @@ struct TextreamApp: App {
         WindowGroup {
             ContentView()
                 .onOpenURL { url in
-                    if url.pathExtension == "textream" {
+                    if TextreamService.isDocumentURL(url) {
                         TextreamService.shared.openFileAtURL(url)
                     } else {
                         TextreamService.shared.handleURL(url)
@@ -164,15 +158,9 @@ struct TextreamApp: App {
 
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("About Textream") {
+                Button("About 刘海提词") {
                     NotificationCenter.default.post(name: .openAbout, object: nil)
                 }
-                #if !APP_STORE
-                Divider()
-                Button("Check for Updates…") {
-                    UpdateChecker.shared.checkForUpdates()
-                }
-                #endif
             }
             CommandGroup(after: .appSettings) {
                 Button("Settings…") {
@@ -205,10 +193,18 @@ struct TextreamApp: App {
                 }
                 .keyboardShortcut(.return, modifiers: .command)
             }
+            CommandMenu("调试") {
+                Button("用音频文件快速跑一遍…") {
+                    TextreamService.shared.startDebugRun(mode: .fast)
+                }
+                Button("按实际速度回放音频文件…") {
+                    TextreamService.shared.startDebugRun(mode: .realtime)
+                }
+            }
             CommandGroup(replacing: .windowArrangement) { }
             CommandGroup(replacing: .help) {
-                Button("Textream Help") {
-                    if let url = URL(string: "https://github.com/f/textream") {
+                Button("刘海提词 Help") {
+                    if let url = URL(string: "https://github.com/wojiaozyh123-hub/notchcue#使用") {
                         NSWorkspace.shared.open(url)
                     }
                 }

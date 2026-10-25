@@ -302,7 +302,7 @@ class BrowserServer {
         <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-        <title>Textream</title>
+        <title>刘海提词</title>
         <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{height:100%;overflow:hidden;background:#000;color:#fff;
@@ -410,7 +410,7 @@ class BrowserServer {
 
         <div id="waiting">
           <div class="icon">📡</div>
-          <div class="title">Waiting for Textream…</div>
+          <div class="title">Waiting for 刘海提词…</div>
           <div class="sub">Start reading in the app to see your teleprompter here</div>
           <div class="url" id="conn-status">Connecting…</div>
         </div>

@@ -27,7 +27,7 @@ struct ContentView: View {
     @FocusState private var isTextFocused: Bool
 
     private let defaultText = """
-Welcome to Textream! This is your personal teleprompter that sits right below your MacBook's notch. [smile]
+Welcome to 刘海提词! This is your personal teleprompter that sits right below your MacBook's notch. [smile]
 
 As you read aloud, the text will highlight in real-time, following your voice. The speech recognition matches your words and keeps track of your progress. [pause]
 
@@ -830,7 +830,7 @@ struct AboutView: View {
 
             // App name & version
             VStack(spacing: 4) {
-                Text("Textream")
+                Text("刘海提词")
                     .font(.system(size: 20, weight: .bold))
                 Text("Version \(appVersion)")
                     .font(.system(size: 12))
@@ -838,7 +838,7 @@ struct AboutView: View {
             }
 
             // Description
-            Text("A free, open-source teleprompter that highlights your script in real-time as you speak.")
+            Text("Based on Textream, a free, open-source teleprompter that highlights your script in real-time as you speak.")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -846,7 +846,7 @@ struct AboutView: View {
 
             // Links
             HStack(spacing: 12) {
-                Link(destination: URL(string: "https://github.com/f/textream")!) {
+                Link(destination: URL(string: "https://github.com/wojiaozyh123-hub/notchcue")!) {
                     HStack(spacing: 5) {
                         Image(systemName: "chevron.left.forwardslash.chevron.right")
                             .font(.system(size: 11, weight: .semibold))
@@ -860,7 +860,7 @@ struct AboutView: View {
                     .clipShape(Capsule())
                 }
 
-                Link(destination: URL(string: "https://textream.net/privacy.html")!) {
+                Link(destination: URL(string: "https://github.com/wojiaozyh123-hub/notchcue/blob/main/SECURITY.md")!) {
                     HStack(spacing: 5) {
                         Image(systemName: "hand.raised.fill")
                             .font(.system(size: 11, weight: .semibold))
@@ -874,22 +874,6 @@ struct AboutView: View {
                     .clipShape(Capsule())
                 }
 
-                #if !APP_STORE
-                Link(destination: URL(string: "https://donate.stripe.com/aFa8wO4NF2S96jDfn4dMI09")!) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.pink)
-                        Text("Donate")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
-                    .background(Color.pink.opacity(0.1))
-                    .clipShape(Capsule())
-                }
-                #endif
             }
 
             Divider().padding(.horizontal, 20)

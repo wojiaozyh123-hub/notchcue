@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B20000000000000000000003 /* PrompterCore in Frameworks */ = {isa = PBXBuildFile; productRef = B20000000000000000000002 /* PrompterCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A10000000000000000000015 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -45,6 +49,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B20000000000000000000003 /* PrompterCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +110,7 @@
 			);
 			name = Textream;
 			packageProductDependencies = (
+				B20000000000000000000002 /* PrompterCore */,
 			);
 			productName = Textream;
 			productReference = 446966B42F37E47300AF141F /* Textream.app */;
@@ -186,6 +192,9 @@
 			);
 			mainGroup = 446966AB2F37E47300AF141F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B20000000000000000000001 /* XCLocalSwiftPackageReference "Packages/PrompterCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 446966B52F37E47300AF141F /* Products */;
 			projectDirPath = "";
@@ -392,26 +401,26 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = RJA7656U34;
+				DEVELOPMENT_TEAM = A9K69U4GT3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Textream;
+				INFOPLIST_KEY_CFBundleDisplayName = "刘海提词";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Fatih Kadir Akın";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Textream lets nearby devices view or control your teleprompter over your local network.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Textream needs microphone access to listen to your speech and highlight words as you read them.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Textream uses Apple's speech-recognition service to follow along as you read and highlight the current word. Microphone audio may be processed by Apple.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Based on Textream, Copyright © 2026 Fatih Kadir Akın (MIT)";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "刘海提词 lets nearby devices view or control your teleprompter over your local network.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "刘海提词 needs microphone access to listen to your speech and highlight words as you read them.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "刘海提词 uses Apple's speech-recognition service to follow along as you read and highlight the current word. Microphone audio may be processed by Apple.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.7.1;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.fka.textream;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = app.notchcue.mac;
+				PRODUCT_NAME = NotchCue;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -440,19 +449,19 @@
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Textream;
+				INFOPLIST_KEY_CFBundleDisplayName = "刘海提词";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Fatih Kadir Akın";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Textream lets nearby devices view or control your teleprompter over your local network.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Textream needs microphone access to listen to your speech and highlight words as you read them.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Textream uses Apple's speech-recognition service to follow along as you read and highlight the current word. Microphone audio may be processed by Apple.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Based on Textream, Copyright © 2026 Fatih Kadir Akın (MIT)";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "刘海提词 lets nearby devices view or control your teleprompter over your local network.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "刘海提词 needs microphone access to listen to your speech and highlight words as you read them.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "刘海提词 uses Apple's speech-recognition service to follow along as you read and highlight the current word. Microphone audio may be processed by Apple.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.7.1;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.fka.textream;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = app.notchcue.mac;
+				PRODUCT_NAME = NotchCue;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -533,27 +542,27 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = RJA7656U34;
+				DEVELOPMENT_TEAM = A9K69U4GT3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Textream;
+				INFOPLIST_KEY_CFBundleDisplayName = "刘海提词";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Fatih Kadir Akın";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Textream lets nearby devices view or control your teleprompter over your local network.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Textream needs microphone access to listen to your speech and highlight words as you read them.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Textream uses Apple's speech-recognition service to follow along as you read and highlight the current word. Microphone audio may be processed by Apple.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Based on Textream, Copyright © 2026 Fatih Kadir Akın (MIT)";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "刘海提词 lets nearby devices view or control your teleprompter over your local network.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "刘海提词 needs microphone access to listen to your speech and highlight words as you read them.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "刘海提词 uses Apple's speech-recognition service to follow along as you read and highlight the current word. Microphone audio may be processed by Apple.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.7.1;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.fka.textream;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = app.notchcue.mac;
+				PRODUCT_NAME = NotchCue;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "APP_STORE $(inherited)";
@@ -807,6 +816,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B20000000000000000000001 /* XCLocalSwiftPackageReference "Packages/PrompterCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/PrompterCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B20000000000000000000002 /* PrompterCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B20000000000000000000001 /* XCLocalSwiftPackageReference "Packages/PrompterCore" */;
+			productName = PrompterCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 446966AC2F37E47300AF141F /* Project object */;
 }

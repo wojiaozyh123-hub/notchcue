@@ -10,6 +10,7 @@ import AppKit
 import Speech
 import Combine
 import CoreImage.CIFilterBuiltins
+import PrompterCore
 
 // MARK: - Preview Panel Controller
 
@@ -32,18 +33,19 @@ class NotchPreviewController {
         let visibleFrame = screen.visibleFrame
         let menuBarHeight = screenFrame.maxY - visibleFrame.maxY
 
-        let maxWidth = NotchSettings.maxWidth
         let maxHeight = menuBarHeight + NotchSettings.maxHeight + 40
 
-        let xPosition = screenFrame.midX - maxWidth / 2
+        // As wide as the screen: the anchor strip sits under the camera and
+        // can reach well right of centre. Other previews centre themselves.
+        let xPosition = screenFrame.minX
         let yPosition = screenFrame.maxY - maxHeight
 
-        let content = NotchPreviewContent(settings: settings, menuBarHeight: menuBarHeight)
+        let content = NotchPreviewContent(settings: settings, menuBarHeight: menuBarHeight, screen: screen)
         let hostingView = NSHostingView(rootView: content)
         self.hostingView = hostingView
 
         let panel = NSPanel(
-            contentRect: NSRect(x: xPosition, y: yPosition, width: maxWidth, height: maxHeight),
+            contentRect: NSRect(x: xPosition, y: yPosition, width: screenFrame.width, height: maxHeight),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -160,6 +162,7 @@ struct NotchPreviewContent: View {
     @Bindable var settings: NotchSettings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let menuBarHeight: CGFloat
+    let screen: NSScreen
 
     private static let previewText = """
     Good morning, and thank you for being here. [smile]
@@ -196,6 +199,14 @@ struct NotchPreviewContent: View {
     }
 
     var body: some View {
+        if settings.overlayMode == .anchor {
+            AnchorPreviewStrip(settings: settings, screen: screen)
+        } else {
+            notchPreview
+        }
+    }
+
+    private var notchPreview: some View {
         GeometryReader { geo in
             let topPadding = menuBarHeight * (1 - offsetPhase) + 14 * offsetPhase
             let contentHeight = topPadding + settings.textAreaHeight
@@ -754,6 +765,54 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Anchor Options
+
+    @ViewBuilder
+    private var anchorOptions: some View {
+        Divider()
+
+        anchorSlider(
+            "字号",
+            value: $settings.anchorFontSize,
+            range: NotchSettings.anchorFontSizeRange,
+            readout: "\(Int(settings.anchorFontSize)) pt"
+        )
+        anchorSlider(
+            "预读字数",
+            value: Binding(
+                get: { Double(settings.anchorPreviewCount) },
+                set: { settings.anchorPreviewCount = Int($0.rounded()) }
+            ),
+            range: Double(NotchSettings.anchorPreviewCountRange.lowerBound)...Double(NotchSettings.anchorPreviewCountRange.upperBound),
+            readout: "\(settings.anchorPreviewCount)"
+        )
+        anchorSlider(
+            "推进速度上限",
+            value: $settings.anchorMaxSpeed,
+            range: NotchSettings.anchorMaxSpeedRange,
+            readout: "\(Int(settings.anchorMaxSpeed)) 字/秒"
+        )
+    }
+
+    private func anchorSlider(
+        _ title: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        readout: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                Spacer()
+                Text(readout)
+                    .font(.system(size: 12, weight: .regular, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+            Slider(value: value, in: range, step: 1)
+        }
+    }
+
     // MARK: - Guidance Tab
 
     private var guidanceTab: some View {
@@ -783,6 +842,15 @@ struct SettingsView: View {
                         }
                     }
                     .labelsHidden()
+
+                    if ChineseAlignerConfig.forSpeechLocale(settings.speechLocale, fuzzyPinyin: false)?.pinyin.mandarin == true {
+                        Toggle(isOn: $settings.fuzzyPinyin) {
+                            Text("模糊音（z/zh、c/ch、s/sh、n/l、an/ang、en/eng、in/ing）")
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .toggleStyle(.checkbox)
+                        .padding(.top, 4)
+                    }
                 }
             }
 
@@ -923,7 +991,7 @@ struct SettingsView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
 
-                if settings.overlayMode == .pinned {
+                if settings.overlayMode == .pinned || settings.overlayMode == .anchor {
                     Divider()
 
                     Text("Display")
@@ -949,46 +1017,50 @@ struct SettingsView: View {
                         )
                     }
 
-                    Divider()
+                    if settings.overlayMode == .anchor {
+                        anchorOptions
+                    } else {
+                        Divider()
 
-                    Toggle(isOn: $settings.overlayTransparency) {
-                        Text("Transparency")
-                            .font(.system(size: 13, weight: .medium))
-                    }
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-
-                    Text("Makes the overlay see-through so desktop content shows through.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-
-                    if settings.overlayTransparency {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text("Amount")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text("\(Int(settings.overlayTransparencyOpacity * 100))%")
-                                    .font(.system(size: 11, weight: .regular, design: .monospaced))
-                                    .foregroundStyle(.tertiary)
-                            }
-                            Slider(
-                                value: $settings.overlayTransparencyOpacity,
-                                in: 0.2...0.95,
-                                step: 0.05
-                            )
-                            HStack {
-                                Text("More transparent")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.tertiary)
-                                Spacer()
-                                Text("Less transparent")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.tertiary)
-                            }
+                        Toggle(isOn: $settings.overlayTransparency) {
+                            Text("Transparency")
+                                .font(.system(size: 13, weight: .medium))
                         }
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+
+                        Text("Makes the overlay see-through so desktop content shows through.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+
+                        if settings.overlayTransparency {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Text("Amount")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Text("\(Int(settings.overlayTransparencyOpacity * 100))%")
+                                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                                        .foregroundStyle(.tertiary)
+                                }
+                                Slider(
+                                    value: $settings.overlayTransparencyOpacity,
+                                    in: 0.2...0.95,
+                                    step: 0.05
+                                )
+                                HStack {
+                                    Text("More transparent")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.tertiary)
+                                    Spacer()
+                                    Text("Less transparent")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                     }
                 }
 
@@ -1514,6 +1586,10 @@ struct SettingsView: View {
         settings.notchWidth = NotchSettings.defaultWidth
         settings.textAreaHeight = NotchSettings.defaultHeight
         settings.speechLocale = NotchSettings.defaultLocale
+        settings.fuzzyPinyin = false
+        settings.anchorFontSize = NotchSettings.defaultAnchorFontSize
+        settings.anchorPreviewCount = NotchSettings.defaultAnchorPreviewCount
+        settings.anchorMaxSpeed = NotchSettings.defaultAnchorMaxSpeed
         settings.fontSizePreset = .lg
         settings.fontFamilyPreset = .sans
         settings.fontColorPreset = .white

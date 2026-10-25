@@ -318,7 +318,7 @@ class DirectorServer {
         <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-        <title>Textream Director</title>
+        <title>刘海提词 Director</title>
         <style>
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{height:100%;overflow:hidden;background:#0a0a0a;color:#fff;

@@ -271,7 +271,8 @@ struct ExternalDisplayView: View {
                     readingPosition: NotchSettings.shared.readingPosition,
                 paragraphBreakBeforeWordIndices: NotchSettings.shared.showParagraphDividers
                     ? content.paragraphBreakBeforeWordIndices
-                    : []
+                    : [],
+                explicitMoveCount: listeningMode == .wordTracking ? speechRecognizer.cursorJumpCount : 0
             )
             .id(content.currentPageIndex)
             .padding(.horizontal, hPad)

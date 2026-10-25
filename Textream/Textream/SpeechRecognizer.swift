@@ -10,6 +10,7 @@ import Foundation
 import Speech
 import AVFoundation
 import CoreAudio
+import PrompterCore
 
 private let waveformUpdatesPerSecond = 20.0
 private let speechCaptureBuffersPerSecond = 40.0
@@ -30,6 +31,20 @@ func speechCaptureFormat(for hardwareFormat: AVAudioFormat) -> AVAudioFormat? {
 
 func speechCaptureBufferSize(for format: AVAudioFormat) -> AVAudioFrameCount {
     AVAudioFrameCount(max(1024, format.sampleRate / speechCaptureBuffersPerSecond))
+}
+
+enum DebugAudioMode: String {
+    /// SFSpeechURLRecognitionRequest: the file is recognized as fast as the
+    /// recognizer can go. For logs, not for watching the overlay.
+    case fast
+    /// The file is played through the audio engine at real speed and fed to
+    /// the same buffer request, restarts and matching as the microphone.
+    case realtime
+}
+
+struct DebugAudioRun {
+    let url: URL
+    let mode: DebugAudioMode
 }
 
 struct AudioInputDevice: Identifiable, Hashable {
@@ -107,6 +122,10 @@ class SpeechRecognizer {
     var lastSpokenText: String = ""
     var shouldDismiss: Bool = false
     var shouldAdvancePage: Bool = false
+    /// Bumped whenever the position is set rather than recognized (new
+    /// script, tap, hotkey), so displays can move there at once instead of
+    /// animating.
+    var cursorJumpCount: Int = 0
 
     /// True when recent audio levels indicate the user is actively speaking
     var isSpeaking: Bool {
@@ -118,8 +137,13 @@ class SpeechRecognizer {
     private var recognitionTask: SFSpeechRecognitionTask?
     private var audioEngine = AVAudioEngine()
     private var sourceText: String = ""
-    private var normalizedSource: String = ""
+    /// The script as passed to start/updateText. Kept so resume() can rebuild
+    /// the aligner when the speech language or fuzzy setting changed.
+    private var scriptText: String = ""
     private var annotationRanges: [Range<Int>] = []
+    /// Follows the script for Chinese speech locales (including mixed
+    /// Chinese/English); nil means the original Textream follower.
+    private var chineseAligner: ChineseAligner?
     private var voiceActivityDetector = VoiceActivityDetector()
     private var matchStartOffset: Int = 0  // char offset to start matching from
     private var retryCount: Int = 0
@@ -148,18 +172,24 @@ class SpeechRecognizer {
     /// against the text at the new offset.
     private var lastJumpAt: Date = .distantPast
 
+    /// An audio-file debug run to use instead of the microphone. Set before
+    /// the overlay starts listening; `start(with:)` takes it.
+    var pendingDebugAudio: DebugAudioRun?
+    private var debugAudio: DebugAudioRun?
+    private var debugPlayer: AVAudioPlayerNode?
+    private var runLog: RecognitionRunLog?
+    private var runStartedAt = Date()
+    private var debugRunFinishWork: DispatchWorkItem?
+    private var debugPlaybackDone = false
+
     /// Update the source text while preserving the current recognized char count.
     /// Used by Director Mode to live-edit unread text without resetting read progress.
     func updateText(_ text: String, preservingCharCount: Int) {
-        let words = splitTextIntoWords(text)
-        let collapsed = words.joined(separator: " ")
-        sourceText = collapsed
-        normalizedSource = Self.normalize(collapsed)
-        annotationRanges = SpeechTextAlignment.annotationRanges(in: collapsed)
-        recognizedCharCount = min(preservingCharCount, collapsed.count)
-        recognizedCharCount = advancePastAnnotations(from: recognizedCharCount)
+        cursorJumpCount &+= 1
+        loadScript(text)
+        recognizedCharCount = settledCursor(at: min(preservingCharCount, sourceText.count))
         matchStartOffset = recognizedCharCount
-        recentMatchPositions = []
+        resetMatchConfirmation()
     }
 
     /// Jump highlight to a specific char offset (e.g. when user taps a word).
@@ -173,11 +203,12 @@ class SpeechRecognizer {
     /// forever.
     func jumpTo(charOffset: Int) {
         let clampedOffset = max(0, min(charOffset, sourceText.count))
-        let targetOffset = advancePastAnnotations(from: clampedOffset)
+        let targetOffset = settledCursor(at: clampedOffset)
         let distance = abs(targetOffset - recognizedCharCount)
+        cursorJumpCount &+= 1
         recognizedCharCount = targetOffset
         matchStartOffset = targetOffset
-        recentMatchPositions = []
+        resetMatchConfirmation()
         if isListening && (distance > 500 || !audioEngine.isRunning) {
             // Far jump, or the engine died without a config-change callback —
             // fall back to a full restart (also refreshes contextualStrings).
@@ -192,16 +223,20 @@ class SpeechRecognizer {
         // Clean up any previous session immediately so pending restarts
         // and stale taps are removed before the async auth callback fires.
         cleanupRecognition()
+        // A page change starts over without stop(); save that run's log.
+        endDebugRun()
 
-        let words = splitTextIntoWords(text)
-        let collapsed = words.joined(separator: " ")
-        sourceText = collapsed
-        normalizedSource = Self.normalize(collapsed)
-        annotationRanges = SpeechTextAlignment.annotationRanges(in: collapsed)
-        recognizedCharCount = advancePastAnnotations(from: 0)
+        cursorJumpCount &+= 1
+        loadScript(text)
+        recognizedCharCount = settledCursor(at: 0)
         matchStartOffset = recognizedCharCount
         retryCount = 0
-        recentMatchPositions = []
+        resetMatchConfirmation()
+        debugAudio = pendingDebugAudio
+        pendingDebugAudio = nil
+        if let debugAudio {
+            beginRunLog(for: debugAudio)
+        }
         error = nil
         sessionGeneration &+= 1
         shouldListen = true
@@ -213,10 +248,16 @@ class SpeechRecognizer {
     private func requestMicrophoneAccessAndBegin(for generation: Int) {
         guard shouldListen, sessionGeneration == generation else { return }
 
+        // An audio-file run never opens the microphone.
+        if debugAudio != nil {
+            beginAfterMicrophoneAccess(for: generation)
+            return
+        }
+
         // Check microphone permission first
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .denied, .restricted:
-            failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow Textream.")
+            failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow 刘海提词.")
             openMicrophoneSettings()
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
@@ -227,7 +268,7 @@ class SpeechRecognizer {
                     if granted {
                         self.beginAfterMicrophoneAccess(for: generation)
                     } else {
-                        self.failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow Textream.")
+                        self.failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow 刘海提词.")
                     }
                 }
             }
@@ -257,7 +298,7 @@ class SpeechRecognizer {
                 case .authorized:
                     self.beginRecognition()
                 default:
-                    self.failListening("Speech recognition not authorized. Open System Settings → Privacy & Security → Speech Recognition to allow Textream.")
+                    self.failListening("Speech recognition not authorized. Open System Settings → Privacy & Security → Speech Recognition to allow 刘海提词.")
                     self.openSpeechRecognitionSettings()
                 }
             }
@@ -290,6 +331,7 @@ class SpeechRecognizer {
         sessionGeneration &+= 1
         isListening = false
         isStarting = false
+        endDebugRun()
         cleanupRecognition()
     }
 
@@ -299,9 +341,12 @@ class SpeechRecognizer {
         isListening = false
         isStarting = false
         sourceText = ""
+        scriptText = ""
         annotationRanges = []
+        chineseAligner = nil
         retryCount = maxRetries
         recentMatchPositions = []
+        endDebugRun()
         cleanupRecognition()
     }
 
@@ -309,9 +354,11 @@ class SpeechRecognizer {
         guard !sourceText.isEmpty else { return }
         cleanupRecognition()
         retryCount = 0
-        recognizedCharCount = advancePastAnnotations(from: recognizedCharCount)
+        // Picks up a speech language or fuzzy-pinyin change made while paused.
+        loadScript(scriptText)
+        recognizedCharCount = settledCursor(at: recognizedCharCount)
         matchStartOffset = recognizedCharCount
-        recentMatchPositions = []
+        resetMatchConfirmation()
         shouldDismiss = false
         error = nil
         sessionGeneration &+= 1
@@ -345,7 +392,16 @@ class SpeechRecognizer {
         if audioEngine.isRunning {
             audioEngine.stop()
         }
-        audioEngine.inputNode.removeTap(onBus: 0)
+        if let debugPlayer {
+            // Real-time audio-file run: the engine has no microphone input,
+            // and touching inputNode would create one.
+            debugPlayer.removeTap(onBus: 0)
+            debugPlayer.stop()
+            audioEngine.detach(debugPlayer)
+            self.debugPlayer = nil
+        } else {
+            audioEngine.inputNode.removeTap(onBus: 0)
+        }
     }
 
     private func cleanupRecognition() {
@@ -404,7 +460,7 @@ class SpeechRecognizer {
 
         // Set selected microphone if configured
         let micUID = NotchSettings.shared.selectedMicUID
-        if !micUID.isEmpty, let deviceID = AudioInputDevice.deviceID(forUID: micUID) {
+        if debugAudio == nil, !micUID.isEmpty, let deviceID = AudioInputDevice.deviceID(forUID: micUID) {
             // Suppress config-change observer during our own device switch
             suppressConfigChange = true
             let inputUnit = audioEngine.inputNode.audioUnit
@@ -462,66 +518,91 @@ class SpeechRecognizer {
             recognitionRequest.taskHint = .dictation
 
             // Add contextual strings from the source text to improve STT accuracy
-            let upcoming = String(sourceText.dropFirst(matchStartOffset))
-            let contextWords = upcoming.split(separator: " ")
-                .map { String($0).lowercased().filter { $0.isLetter || $0.isNumber } }
-                .filter { $0.count >= 5 }
-            let uniqueContextWords = Array(Set(contextWords).prefix(50))
-            if !uniqueContextWords.isEmpty {
-                recognitionRequest.contextualStrings = uniqueContextWords
+            let hints = recognitionHints()
+            if !hints.isEmpty {
+                recognitionRequest.contextualStrings = hints
+            }
+
+            if let debugAudio, debugAudio.mode == .fast {
+                beginFastFileRecognition(debugAudio, recognizer: speechRecognizer, hints: hints)
+                return
             }
         } else {
             speechRecognizer = nil
             recognitionRequest = nil
         }
 
-        let inputNode = audioEngine.inputNode
-        let hardwareFormat = inputNode.outputFormat(forBus: 0)
-
-        // Guard against invalid format during device transitions (e.g. mic switch)
-        guard hardwareFormat.sampleRate > 0, hardwareFormat.channelCount > 0 else {
-            // Retry after a longer delay to let the audio system settle
-            if retryCount < maxRetries {
-                retryCount += 1
-                scheduleBeginRecognition(after: 0.5)
-            } else {
-                failListening("Audio input is unavailable.")
+        let tapNode: AVAudioNode
+        let tapFormat: AVAudioFormat
+        var debugPlayback: (player: AVAudioPlayerNode, buffer: AVAudioPCMBuffer)?
+        if let debugAudio, debugAudio.mode == .realtime {
+            // Play the file through the engine and tap the player instead of
+            // the microphone, so recognition runs at real speed through the
+            // same request, restarts and matching as live speech.
+            guard let buffer = Self.monoBuffer(from: debugAudio.url) else {
+                failListening("Couldn't read the audio file.")
+                return
             }
-            return
-        }
+            let player = AVAudioPlayerNode()
+            audioEngine.attach(player)
+            audioEngine.connect(player, to: audioEngine.mainMixerNode, format: buffer.format)
+            debugPlayer = player
+            debugPlayback = (player, buffer)
+            tapNode = player
+            tapFormat = buffer.format
+        } else {
+            let inputNode = audioEngine.inputNode
+            let hardwareFormat = inputNode.outputFormat(forBus: 0)
 
-        // SFSpeechRecognizer expects mono voice audio. Downmix multi-channel
-        // devices without changing the input node's hardware sample rate.
-        guard let tapFormat = speechCaptureFormat(for: hardwareFormat) else {
-            failListening("Audio input format is unsupported.")
-            return
-        }
+            // Guard against invalid format during device transitions (e.g. mic switch)
+            guard hardwareFormat.sampleRate > 0, hardwareFormat.channelCount > 0 else {
+                // Retry after a longer delay to let the audio system settle
+                if retryCount < maxRetries {
+                    retryCount += 1
+                    scheduleBeginRecognition(after: 0.5)
+                } else {
+                    failListening("Audio input is unavailable.")
+                }
+                return
+            }
 
-        // Observe audio configuration changes (e.g. mic switched externally) to restart gracefully
-        configurationChangeObserver = NotificationCenter.default.addObserver(
-            forName: .AVAudioEngineConfigurationChange,
-            object: audioEngine,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self,
-                  self.shouldListen,
-                  !self.suppressConfigChange,
-                  !self.sourceText.isEmpty else { return }
-            self.restartRecognition()
+            // SFSpeechRecognizer expects mono voice audio. Downmix multi-channel
+            // devices without changing the input node's hardware sample rate.
+            guard let format = speechCaptureFormat(for: hardwareFormat) else {
+                failListening("Audio input format is unsupported.")
+                return
+            }
+            tapNode = inputNode
+            tapFormat = format
+
+            // Observe audio configuration changes (e.g. mic switched externally) to restart gracefully
+            configurationChangeObserver = NotificationCenter.default.addObserver(
+                forName: .AVAudioEngineConfigurationChange,
+                object: audioEngine,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self,
+                      self.shouldListen,
+                      !self.suppressConfigChange,
+                      !self.sourceText.isEmpty else { return }
+                self.restartRecognition()
+            }
         }
 
         // Belt-and-suspenders: ensure no stale tap exists before installing
-        inputNode.removeTap(onBus: 0)
+        tapNode.removeTap(onBus: 0)
 
         let waveformFrameInterval = AVAudioFrameCount(
             max(1, tapFormat.sampleRate / waveformUpdatesPerSecond)
         )
         var framesSinceWaveformUpdate = waveformFrameInterval
 
-        inputNode.installTap(
+        // A player is already connected in the mono file format; a format may
+        // only be given for the unconnected input node.
+        tapNode.installTap(
             onBus: 0,
             bufferSize: speechCaptureBufferSize(for: tapFormat),
-            format: tapFormat
+            format: debugPlayback == nil ? tapFormat : nil
         ) { [weak self] buffer, _ in
             self?.appendBufferToRequest(buffer)
 
@@ -554,13 +635,14 @@ class SpeechRecognizer {
                 guard let self else { return }
                 if let result {
                     let spoken = result.bestTranscription.formattedString
+                    let isFinal = result.isFinal
                     DispatchQueue.main.async {
                         // Ignore stale results from a previous session
                         guard self.sessionGeneration == currentGeneration,
                               self.recognitionGeneration == currentRecognitionGeneration else { return }
                         self.retryCount = 0 // Reset on success
                         self.lastSpokenText = spoken
-                        self.matchCharacters(spoken: spoken)
+                        self.matchCharacters(spoken: spoken, isFinal: isFinal)
                     }
                 }
                 if let error {
@@ -616,6 +698,9 @@ class SpeechRecognizer {
             isListening = true
             if requiresSpeechRecognition {
                 startPreemptiveTimer()
+            }
+            if let debugPlayback {
+                startDebugPlayback(debugPlayback.player, buffer: debugPlayback.buffer)
             }
         } catch {
             // Transient failure after a device switch — retry with longer delay
@@ -674,7 +759,7 @@ class SpeechRecognizer {
         let currentRecognitionGeneration = recognitionGeneration
         // Update match offset before restarting
         matchStartOffset = recognizedCharCount
-        recentMatchPositions = []
+        resetMatchConfirmation()
         // New task = fresh transcript. lastSpokenText must be cleared too:
         // a jump taken before the first new result would otherwise anchor on
         // the old task's transcript and trim away everything the new task
@@ -694,13 +779,9 @@ class SpeechRecognizer {
         newRequest.taskHint = .dictation
 
         // Add contextual strings for the remaining text
-        let upcoming = String(sourceText.dropFirst(matchStartOffset))
-        let contextWords = upcoming.split(separator: " ")
-            .map { String($0).lowercased().filter { $0.isLetter || $0.isNumber } }
-            .filter { $0.count >= 5 }
-        let uniqueWords = Array(Set(contextWords).prefix(50))
-        if !uniqueWords.isEmpty {
-            newRequest.contextualStrings = uniqueWords
+        let hints = recognitionHints()
+        if !hints.isEmpty {
+            newRequest.contextualStrings = hints
         }
 
         // Nil out recognitionRequest before cancelling the old task so the
@@ -736,12 +817,13 @@ class SpeechRecognizer {
             guard let self else { return }
             if let result {
                 let spoken = result.bestTranscription.formattedString
+                let isFinal = result.isFinal
                 DispatchQueue.main.async {
                     guard self.sessionGeneration == currentGeneration,
                           self.recognitionGeneration == currentRecognitionGeneration else { return }
                     self.retryCount = 0
                     self.lastSpokenText = spoken
-                    self.matchCharacters(spoken: spoken)
+                    self.matchCharacters(spoken: spoken, isFinal: isFinal)
                 }
             }
             if let error {
@@ -796,9 +878,59 @@ class SpeechRecognizer {
         preemptiveRestartTimer = nil
     }
 
-    // MARK: - Fuzzy character-level matching
+    // MARK: - Following the script
 
-    private func matchCharacters(spoken fullSpoken: String) {
+    /// Loads a script for matching. Chinese speech locales get the Chinese
+    /// aligner; every other locale keeps the original follower.
+    private func loadScript(_ text: String) {
+        scriptText = text
+        let words = splitTextIntoWords(text)
+        let collapsed = words.joined(separator: " ")
+        sourceText = collapsed
+        annotationRanges = SpeechTextAlignment.annotationRanges(in: collapsed)
+        let settings = NotchSettings.shared
+        if let config = ChineseAlignerConfig.forSpeechLocale(settings.speechLocale, fuzzyPinyin: settings.fuzzyPinyin) {
+            let script = TokenizedScript(
+                words: words,
+                paragraphBreakBeforeWordIndices: paragraphBreakWordIndices(in: text)
+            )
+            chineseAligner = ChineseAligner(script: script, config: config)
+        } else {
+            chineseAligner = nil
+        }
+    }
+
+    /// Where the highlight rests for a requested offset: past any annotation
+    /// (original follower) or at the start of the next unread token (Chinese
+    /// aligner, whose cursor is moved there too).
+    private func settledCursor(at offset: Int) -> Int {
+        guard var aligner = chineseAligner else {
+            return advancePastAnnotations(from: offset)
+        }
+        aligner.setCursor(aligner.script.tokenIndex(forOffset: offset))
+        chineseAligner = aligner
+        return aligner.cursorOffset
+    }
+
+    /// Forget recent match candidates (the 2-of-3 confirmation window).
+    private func resetMatchConfirmation() {
+        recentMatchPositions = []
+        chineseAligner?.resetConfirmation()
+    }
+
+    /// contextualStrings for the next recognition request.
+    private func recognitionHints() -> [String] {
+        if let aligner = chineseAligner {
+            let script = aligner.script
+            let startWord = aligner.cursor < script.tokens.count
+                ? script.tokens[aligner.cursor].wordIndex
+                : script.words.count
+            return ContextualPhrases.chinese(words: script.words, fromWord: startWord)
+        }
+        return ContextualPhrases.legacy(sourceText: sourceText, matchStartOffset: matchStartOffset)
+    }
+
+    private func matchCharacters(spoken fullSpoken: String, isFinal: Bool = false) {
         // Results computed before a jump can be delivered just after it —
         // don't match pre-jump speech against the text at the new offset.
         guard Date().timeIntervalSince(lastJumpAt) > 0.3 else { return }
@@ -814,54 +946,32 @@ class SpeechRecognizer {
             let trimLen = min(fullSpoken.count, max(common, spokenAnchorPrefix.count - 24))
             spoken = String(fullSpoken.dropFirst(trimLen))
         }
+        defer { recordRunEntry(transcript: fullSpoken, matchedText: spoken, isFinal: isFinal) }
         guard !spoken.isEmpty else { return }
 
-        // Strategy 1: character-level fuzzy match from the start offset
-        let charResult = charLevelMatch(spoken: spoken)
-
-        // Strategy 2: word-level match (handles STT word substitutions)
-        let wordResult = wordLevelMatch(spoken: spoken)
-
-        // Combine the two strategies. When they agree, average; when they
-        // disagree, prefer the further (word-level) match so fast reading can
-        // catch up instead of being dragged back by the brittle character scan.
-        let best = SpeechTextAlignment.bestOffset(characterResult: charResult, wordResult: wordResult)
-
-        let rawCandidate = min(matchStartOffset + best, sourceText.count)
-        let candidate = advancePastAnnotations(from: rawCandidate)
-        guard candidate > recognizedCharCount else { return }
-
-        // Confidence gating: require 2-of-3 recent results to agree on
-        // forward movement to avoid single-result false-positive jumps.
-        recentMatchPositions.append(candidate)
-        if recentMatchPositions.count > 3 {
-            recentMatchPositions.removeFirst()
-        }
-
-        // Check if at least 2 of the recent positions agree (within tolerance)
-        let agreementThreshold = 10 // characters
-        var confirmed = false
-        if recentMatchPositions.count >= 2 {
-            var agreeCount = 0
-            for pos in recentMatchPositions {
-                if abs(pos - candidate) <= agreementThreshold {
-                    agreeCount += 1
-                }
+        if var aligner = chineseAligner {
+            // recognizedCharCount is also written from outside (page changes,
+            // the overlay); it is the position of record.
+            if aligner.cursorOffset != recognizedCharCount {
+                aligner.setCursor(aligner.script.tokenIndex(forOffset: recognizedCharCount))
             }
-            confirmed = agreeCount >= 2
+            if aligner.feed(spoken) {
+                recognizedCharCount = aligner.cursorOffset
+            }
+            chineseAligner = aligner
+            return
         }
 
-        // Small forward movements (< 1 word length) are always allowed
-        // to keep the highlight responsive for normal reading
-        if SpeechTextAlignment.shouldCommit(
-            characterResult: charResult,
-            wordResult: wordResult,
-            current: recognizedCharCount,
-            rawCandidate: rawCandidate,
-            candidate: candidate,
-            confirmed: confirmed
-        ) {
-            recognizedCharCount = candidate
+        var legacy = LegacyAligner()
+        legacy.sourceText = sourceText
+        legacy.annotationRanges = annotationRanges
+        legacy.matchStartOffset = matchStartOffset
+        legacy.recognizedCharCount = recognizedCharCount
+        legacy.recentMatchPositions = recentMatchPositions
+        legacy.match(spoken: spoken)
+        recentMatchPositions = legacy.recentMatchPositions
+        if legacy.recognizedCharCount != recognizedCharCount {
+            recognizedCharCount = legacy.recognizedCharCount
         }
     }
 
@@ -873,247 +983,160 @@ class SpeechRecognizer {
         )
     }
 
-    private func charLevelMatch(spoken: String) -> Int {
-        let remainingSource = String(sourceText.dropFirst(matchStartOffset))
-        // Use Character arrays (not unicodeScalars) so counts match sourceText.count
-        let src = Array(remainingSource.lowercased())
-        let spk = Array(Self.normalize(spoken))
+    // MARK: - Audio-file debug runs
 
-        var si = 0
-        var ri = 0
-        var lastGoodOrigIndex = 0
-
-        while si < src.count && ri < spk.count {
-            let sc = src[si]
-            let rc = spk[ri]
-
-            if sc == "[",
-               let closingIndex = src[si...].firstIndex(of: "]") {
-                si = closingIndex + 1
-                lastGoodOrigIndex = si
-                continue
-            }
-
-            // Skip non-alphanumeric in source
-            if !sc.isLetter && !sc.isNumber {
-                si += 1
-                continue
-            }
-            // Skip non-alphanumeric in spoken
-            if !rc.isLetter && !rc.isNumber {
-                ri += 1
-                continue
-            }
-
-            if sc == rc {
-                si += 1
-                ri += 1
-                lastGoodOrigIndex = si
-            } else {
-                // Try to re-sync: look ahead in both strings
-                var found = false
-
-                // Skip up to 5 chars in spoken (STT inserted extra chars, or
-                // fast reading outran the scan)
-                let maxSkipR = min(5, spk.count - ri - 1)
-                if maxSkipR >= 1 {
-                    for skipR in 1...maxSkipR {
-                        let nextRI = ri + skipR
-                        if nextRI < spk.count && spk[nextRI] == sc {
-                            ri = nextRI
-                            found = true
-                            break
-                        }
-                    }
-                }
-                if found { continue }
-
-                // Skip up to 5 chars in source (STT missed some chars, or
-                // fast reading outran the scan)
-                let maxSkipS = min(5, src.count - si - 1)
-                if maxSkipS >= 1 {
-                    for skipS in 1...maxSkipS {
-                        let nextSI = si + skipS
-                        if nextSI < src.count && src[nextSI] == rc {
-                            si = nextSI
-                            found = true
-                            break
-                        }
-                    }
-                }
-                if found { continue }
-
-                // No resync found — advance spoken pointer only.
-                // Do NOT advance lastGoodOrigIndex; this is a genuine mismatch,
-                // not a confirmed match position.
-                ri += 1
-            }
-        }
-
-        while si < src.count {
-            if src[si] == "[",
-               let closingIndex = src[si...].firstIndex(of: "]") {
-                si = closingIndex + 1
-                lastGoodOrigIndex = si
-            } else if !src[si].isLetter && !src[si].isNumber {
-                si += 1
-                lastGoodOrigIndex = si
-            } else {
-                break
-            }
-        }
-
-        return lastGoodOrigIndex
+    private func beginRunLog(for run: DebugAudioRun) {
+        let settings = NotchSettings.shared
+        runLog = RecognitionRunLog(
+            script: scriptText,
+            locale: settings.speechLocale,
+            fuzzyPinyin: settings.fuzzyPinyin,
+            mode: run.mode.rawValue,
+            audioFile: run.url.lastPathComponent,
+            onDevice: false
+        )
+        runStartedAt = Date()
+        debugPlaybackDone = false
     }
 
-    private static func isAnnotationWord(_ word: String) -> Bool {
-        if word.hasPrefix("[") && word.hasSuffix("]") { return true }
-        let stripped = word.filter { $0.isLetter || $0.isNumber }
-        return stripped.isEmpty
-    }
-
-    private func wordLevelMatch(spoken: String) -> Int {
-        let remainingSource = String(sourceText.dropFirst(matchStartOffset))
-        let sourceWords = remainingSource.split(separator: " ").map { String($0) }
-        let spokenWords = splitTextIntoWords(spoken.lowercased())
-
-        var si = 0 // source word index
-        var ri = 0 // spoken word index
-        var matchedCharCount = 0
-        var isInsideAnnotation = false
-
-        while si < sourceWords.count && ri < spokenWords.count {
-            // Auto-skip annotation words in source (brackets, emoji)
-            let beginsAnnotation = sourceWords[si].hasPrefix("[")
-                && sourceWords[si...].contains(where: { $0.contains("]") })
-            let skipsAnnotation = isInsideAnnotation || beginsAnnotation || Self.isAnnotationWord(sourceWords[si])
-            if skipsAnnotation {
-                if beginsAnnotation {
-                    isInsideAnnotation = true
-                }
-                if sourceWords[si].contains("]") {
-                    isInsideAnnotation = false
-                }
-                matchedCharCount += sourceWords[si].count
-                if si < sourceWords.count - 1 { matchedCharCount += 1 }
-                si += 1
-                continue
-            }
-
-            let srcWord = sourceWords[si].lowercased()
-                .filter { $0.isLetter || $0.isNumber }
-            let spkWord = spokenWords[ri]
-                .filter { $0.isLetter || $0.isNumber }
-
-            if srcWord == spkWord || isFuzzyMatch(srcWord, spkWord) {
-                // Count original chars including trailing punctuation
-                matchedCharCount += sourceWords[si].count
-                si += 1
-                ri += 1
-                // Add space separator only if there's a following word
-                if si < sourceWords.count {
-                    matchedCharCount += 1
-                }
-            } else {
-                // Try skipping up to 5 spoken words (STT hallucinated words,
-                // or fast reading produced a burst)
-                var foundSpk = false
-                let maxSpkSkip = min(5, spokenWords.count - ri - 1)
-                for skip in 1...max(1, maxSpkSkip) where skip <= maxSpkSkip {
-                    let nextSpk = spokenWords[ri + skip].filter { $0.isLetter || $0.isNumber }
-                    if srcWord == nextSpk || isFuzzyMatch(srcWord, nextSpk) {
-                        ri += skip
-                        foundSpk = true
-                        break
-                    }
-                }
-                if foundSpk { continue }
-
-                // Try skipping up to 5 source words (user read fast, STT missed words)
-                var foundSrc = false
-                let maxSrcSkip = min(5, sourceWords.count - si - 1)
-                for skip in 1...max(1, maxSrcSkip) where skip <= maxSrcSkip {
-                    let nextSrc = sourceWords[si + skip].lowercased().filter { $0.isLetter || $0.isNumber }
-                    if nextSrc == spkWord || isFuzzyMatch(nextSrc, spkWord) {
-                        // Add all skipped source words' char counts
-                        for s in 0..<skip {
-                            matchedCharCount += sourceWords[si + s].count + 1
-                        }
-                        si += skip
-                        foundSrc = true
-                        break
-                    }
-                }
-                if foundSrc { continue }
-
-                // Try treating current source word as punctuation-only and skip it
-                if srcWord.isEmpty {
-                    matchedCharCount += sourceWords[si].count
-                    if si < sourceWords.count - 1 { matchedCharCount += 1 }
-                    si += 1
-                    continue
-                }
-                // No match, advance spoken
-                ri += 1
+    private func recordRunEntry(transcript: String, matchedText: String, isFinal: Bool) {
+        guard runLog != nil else { return }
+        runLog?.entries.append(RecognitionRunLog.Entry(
+            time: Date().timeIntervalSince(runStartedAt),
+            transcript: transcript,
+            matchedText: matchedText,
+            isFinal: isFinal,
+            charCount: recognizedCharCount
+        ))
+        // The file is fully recognized: stop, which saves the log. Async so
+        // the result callback finishes first.
+        if isFinal && (debugAudio?.mode == .fast || debugPlaybackDone) {
+            DispatchQueue.main.async { [weak self] in
+                self?.stop()
             }
         }
+    }
 
-        // Auto-skip trailing annotation words at end of source
-        while si < sourceWords.count {
-            let beginsAnnotation = sourceWords[si].hasPrefix("[")
-                && sourceWords[si...].contains(where: { $0.contains("]") })
-            let skipsAnnotation = isInsideAnnotation || beginsAnnotation || Self.isAnnotationWord(sourceWords[si])
-            guard skipsAnnotation else { break }
-            if beginsAnnotation {
-                isInsideAnnotation = true
-            }
-            if sourceWords[si].contains("]") {
-                isInsideAnnotation = false
-            }
-            matchedCharCount += sourceWords[si].count
-            if si < sourceWords.count - 1 { matchedCharCount += 1 }
-            si += 1
+    /// Ends an audio-file run, if one is active, and saves its log.
+    private func endDebugRun() {
+        debugRunFinishWork?.cancel()
+        debugRunFinishWork = nil
+        debugPlaybackDone = false
+        let log = runLog
+        let run = debugAudio
+        runLog = nil
+        debugAudio = nil
+        if let log, let run {
+            saveRunLog(log, audioURL: run.url)
         }
-
-        return matchedCharCount
     }
 
-    private func isFuzzyMatch(_ a: String, _ b: String) -> Bool {
-        if a.isEmpty || b.isEmpty { return false }
-        // Exact match
-        if a == b { return true }
-        let shorter = min(a.count, b.count)
-        // Prefix match — only for words with at least 3 chars to avoid
-        // false positives like "or" matching "organization"
-        if shorter >= 3 && (a.hasPrefix(b) || b.hasPrefix(a)) { return true }
-        // Shared prefix >= 60% of shorter word (min 3 chars shared)
-        let shared = zip(a, b).prefix(while: { $0 == $1 }).count
-        if shorter >= 3 && shared >= max(3, shorter * 3 / 5) { return true }
-        // Edit distance tolerance — stricter for very short words
-        let dist = editDistance(a, b)
-        if shorter <= 2 { return false } // 2-char words must be exact
-        if shorter <= 4 { return dist <= 1 }
-        if shorter <= 8 { return dist <= 2 }
-        return dist <= max(a.count, b.count) / 3
+    private func saveRunLog(_ log: RecognitionRunLog, audioURL: URL) {
+        do {
+            let directory = try FileManager.default
+                .url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                .appendingPathComponent("DebugRuns", isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyyMMdd-HHmmss"
+            let name = "\(audioURL.deletingPathExtension().lastPathComponent)-\(log.mode)-\(formatter.string(from: Date())).json"
+            let url = directory.appendingPathComponent(name)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+            try encoder.encode(log).write(to: url, options: .atomic)
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } catch {
+            self.error = "Couldn't save the debug log: \(error.localizedDescription)"
+        }
     }
 
-    private func editDistance(_ a: String, _ b: String) -> Int {
-        let a = Array(a), b = Array(b)
-        var dp = Array(0...b.count)
-        for i in 1...a.count {
-            var prev = dp[0]
-            dp[0] = i
-            for j in 1...b.count {
-                let temp = dp[j]
-                dp[j] = a[i-1] == b[j-1] ? prev : min(prev, dp[j], dp[j-1]) + 1
-                prev = temp
+    private func beginFastFileRecognition(_ run: DebugAudioRun, recognizer: SFSpeechRecognizer, hints: [String]) {
+        // The buffer request built for the microphone is not used.
+        recognitionRequest = nil
+        let request = SFSpeechURLRecognitionRequest(url: run.url)
+        request.shouldReportPartialResults = true
+        request.taskHint = .dictation
+        if !hints.isEmpty {
+            request.contextualStrings = hints
+        }
+        // Server recognition stops after about a minute of audio; on-device
+        // recognition has no such limit.
+        if recognizer.supportsOnDeviceRecognition {
+            request.requiresOnDeviceRecognition = true
+        }
+        runLog?.onDevice = request.requiresOnDeviceRecognition
+
+        recognitionGeneration &+= 1
+        let currentRecognitionGeneration = recognitionGeneration
+        let currentGeneration = sessionGeneration
+        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
+            let spoken = result?.bestTranscription.formattedString
+            let isFinal = result?.isFinal ?? false
+            let message = error?.localizedDescription
+            DispatchQueue.main.async {
+                guard let self,
+                      self.sessionGeneration == currentGeneration,
+                      self.recognitionGeneration == currentRecognitionGeneration else { return }
+                if let spoken {
+                    self.lastSpokenText = spoken
+                    self.matchCharacters(spoken: spoken, isFinal: isFinal)
+                }
+                if let message, !isFinal {
+                    self.stop()
+                    self.error = "Audio-file recognition stopped: \(message)"
+                }
             }
         }
-        return dp[b.count]
+        isStarting = false
+        isListening = true
     }
 
-    private static func normalize(_ text: String) -> String {
-        text.lowercased()
-            .filter { $0.isLetter || $0.isNumber || $0.isWhitespace }
+    private func startDebugPlayback(_ player: AVAudioPlayerNode, buffer: AVAudioPCMBuffer) {
+        let generation = sessionGeneration
+        debugPlaybackDone = false
+        player.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self, self.sessionGeneration == generation, self.debugAudio != nil else { return }
+                self.debugPlaybackDone = true
+                // End the request so the recognizer delivers its final
+                // result; stop anyway if none arrives.
+                self.requestLock.lock()
+                self.recognitionRequest?.endAudio()
+                self.requestLock.unlock()
+                let work = DispatchWorkItem { [weak self] in
+                    self?.stop()
+                }
+                self.debugRunFinishWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: work)
+            }
+        }
+        player.play()
+    }
+
+    /// The whole file as one mono float buffer at the file's sample rate.
+    private static func monoBuffer(from url: URL) -> AVAudioPCMBuffer? {
+        guard let file = try? AVAudioFile(forReading: url, commonFormat: .pcmFormatFloat32, interleaved: false),
+              file.length > 0,
+              let source = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)),
+              (try? file.read(into: source)) != nil,
+              let monoFormat = AVAudioFormat(
+                commonFormat: .pcmFormatFloat32,
+                sampleRate: file.processingFormat.sampleRate,
+                channels: 1,
+                interleaved: false
+              ),
+              let mono = AVAudioPCMBuffer(pcmFormat: monoFormat, frameCapacity: source.frameLength),
+              let input = source.floatChannelData,
+              let output = mono.floatChannelData else { return nil }
+        let channels = Int(source.format.channelCount)
+        for frame in 0..<Int(source.frameLength) {
+            var sum: Float = 0
+            for channel in 0..<channels {
+                sum += input[channel][frame]
+            }
+            output[0][frame] = sum / Float(channels)
+        }
+        mono.frameLength = source.frameLength
+        return mono
     }
 }

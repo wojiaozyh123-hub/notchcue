@@ -9,6 +9,7 @@ import AppKit
 import Combine
 import SwiftUI
 import UniformTypeIdentifiers
+import PrompterCore
 
 class TextreamService: NSObject, ObservableObject {
     static let shared = TextreamService()
@@ -155,6 +156,32 @@ class TextreamService: NSObject, ObservableObject {
         }
     }
 
+    /// Reads the current page with an audio file standing in for the
+    /// microphone, and saves a log of every recognition result.
+    func startDebugRun(mode: DebugAudioMode) {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.audio]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.begin { [weak self] response in
+            guard let self, response == .OK, let url = panel.url else { return }
+            guard NotchSettings.shared.listeningMode == .wordTracking else {
+                let alert = NSAlert()
+                alert.messageText = "音频文件调试需要 Word Tracking 模式"
+                alert.runModal()
+                return
+            }
+            guard !self.currentPageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                let alert = NSAlert()
+                alert.messageText = "当前页没有稿子"
+                alert.runModal()
+                return
+            }
+            self.overlayController.speechRecognizer.pendingDebugAudio = DebugAudioRun(url: url, mode: mode)
+            self.readCurrentPage()
+        }
+    }
+
     func startAllPages() {
         readPages.removeAll()
         currentPageIndex = 0
@@ -206,8 +233,8 @@ class TextreamService: NSObject, ObservableObject {
 
     func saveFileAs() {
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.init(filenameExtension: "textream")!]
-        panel.nameFieldStringValue = "Untitled.textream"
+        panel.allowedContentTypes = [.init(filenameExtension: "notchcue")!]
+        panel.nameFieldStringValue = "Untitled.notchcue"
         panel.canCreateDirectories = true
         panel.directoryURL = currentFileURL?.deletingLastPathComponent()
             ?? lastDocumentDirectoryURL
@@ -243,6 +270,7 @@ class TextreamService: NSObject, ObservableObject {
 
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [
+            .init(filenameExtension: "notchcue")!,
             .init(filenameExtension: "textream")!,
             .init(filenameExtension: "key")!,
             .init(filenameExtension: "pptx")!,
@@ -315,6 +343,12 @@ class TextreamService: NSObject, ObservableObject {
         default:
             return false
         }
+    }
+
+    /// Script documents this app reads. `.textream` files from the original
+    /// app share the same JSON format, so they open too.
+    static func isDocumentURL(_ url: URL) -> Bool {
+        ["notchcue", "textream"].contains(url.pathExtension.lowercased())
     }
 
     func openFileAtURL(_ url: URL) {
@@ -494,9 +528,9 @@ class TextreamService: NSObject, ObservableObject {
         readText(text)
     }
 
-    // URL scheme handler: textream://read?text=Hello%20World
+    // URL scheme handler: notchcue://read?text=Hello%20World
     func handleURL(_ url: URL) {
-        guard url.scheme == "textream" else { return }
+        guard url.scheme == "notchcue" else { return }
 
         if url.host == "read" || url.path == "/read" {
             if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),

@@ -168,13 +168,14 @@ enum CueBrightness: String, CaseIterable, Identifiable {
 // MARK: - Overlay Mode
 
 enum OverlayMode: String, CaseIterable, Identifiable {
-    case pinned, floating, fullscreen
+    case pinned, anchor, floating, fullscreen
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
         case .pinned:     return "Pinned to Notch"
+        case .anchor:     return "刘海锚点"
         case .floating:   return "Floating Window"
         case .fullscreen: return "Fullscreen"
         }
@@ -183,6 +184,7 @@ enum OverlayMode: String, CaseIterable, Identifiable {
     var description: String {
         switch self {
         case .pinned:     return "Anchored below the notch at the top of your screen."
+        case .anchor:     return "下一个要读的字固定在摄像头正下方。"
         case .floating:   return "A draggable window you can place anywhere. Always on top."
         case .fullscreen: return "Fullscreen teleprompter on the selected display. Press Esc to stop."
         }
@@ -191,6 +193,7 @@ enum OverlayMode: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .pinned:     return "rectangle.topthird.inset.filled"
+        case .anchor:     return "camera.aperture"
         case .floating:   return "macwindow.on.rectangle"
         case .fullscreen: return "rectangle.fill"
         }
@@ -345,6 +348,27 @@ class NotchSettings {
         didSet { UserDefaults.standard.set(speechLocale, forKey: "speechLocale") }
     }
 
+    /// Chinese word tracking treats z/zh, c/ch, s/sh, n/l, an/ang, en/eng and
+    /// in/ing as the same sound.
+    var fuzzyPinyin: Bool {
+        didSet { UserDefaults.standard.set(fuzzyPinyin, forKey: "fuzzyPinyin") }
+    }
+
+    /// Anchor mode: point size of the single line.
+    var anchorFontSize: Double {
+        didSet { UserDefaults.standard.set(anchorFontSize, forKey: "anchorFontSize") }
+    }
+
+    /// Anchor mode: upcoming words shown right of the anchor.
+    var anchorPreviewCount: Int {
+        didSet { UserDefaults.standard.set(anchorPreviewCount, forKey: "anchorPreviewCount") }
+    }
+
+    /// Anchor mode: fastest the line moves while catching up, in words per second.
+    var anchorMaxSpeed: Double {
+        didSet { UserDefaults.standard.set(anchorMaxSpeed, forKey: "anchorMaxSpeed") }
+    }
+
     var fontSizePreset: FontSizePreset {
         didSet { UserDefaults.standard.set(fontSizePreset.rawValue, forKey: "fontSizePreset") }
     }
@@ -487,10 +511,22 @@ class NotchSettings {
         fontFamilyPreset.font(size: fontSizePreset.pointSize)
     }
 
+    var anchorFont: NSFont {
+        fontFamilyPreset.font(size: CGFloat(anchorFontSize))
+    }
+
+    static let anchorFontSizeRange: ClosedRange<Double> = 18...40
+    static let anchorPreviewCountRange: ClosedRange<Int> = 8...20
+    static let anchorMaxSpeedRange: ClosedRange<Double> = 4...16
+    static let defaultAnchorFontSize: Double = 26
+    static let defaultAnchorPreviewCount = 12
+    static let defaultAnchorMaxSpeed: Double = 8
+
     static let defaultWidth: CGFloat = 340
     static let defaultHeight: CGFloat = 150
-    static let defaultLocale: String = SpeechLocaleSupport.closestSupportedLocale(to: Locale.current.identifier)?.identifier
-        ?? Locale.current.identifier
+    /// Mandarin first; the language can be changed in Settings.
+    static let defaultLocale: String = SpeechLocaleSupport.closestSupportedLocale(to: "zh-CN")?.identifier
+        ?? "zh-CN"
 
     static let minWidth: CGFloat = 310
     static let maxWidth: CGFloat = 500
@@ -505,6 +541,16 @@ class NotchSettings {
         let preferredSpeechLocale = UserDefaults.standard.string(forKey: "speechLocale") ?? Self.defaultLocale
         self.speechLocale = SpeechLocaleSupport.closestSupportedLocale(to: preferredSpeechLocale)?.identifier
             ?? Self.defaultLocale
+        self.fuzzyPinyin = UserDefaults.standard.object(forKey: "fuzzyPinyin") as? Bool ?? false
+        let savedAnchorFontSize = UserDefaults.standard.double(forKey: "anchorFontSize")
+        self.anchorFontSize = Self.anchorFontSizeRange.contains(savedAnchorFontSize)
+            ? savedAnchorFontSize : Self.defaultAnchorFontSize
+        let savedAnchorPreviewCount = UserDefaults.standard.integer(forKey: "anchorPreviewCount")
+        self.anchorPreviewCount = Self.anchorPreviewCountRange.contains(savedAnchorPreviewCount)
+            ? savedAnchorPreviewCount : Self.defaultAnchorPreviewCount
+        let savedAnchorMaxSpeed = UserDefaults.standard.double(forKey: "anchorMaxSpeed")
+        self.anchorMaxSpeed = Self.anchorMaxSpeedRange.contains(savedAnchorMaxSpeed)
+            ? savedAnchorMaxSpeed : Self.defaultAnchorMaxSpeed
         self.fontSizePreset = FontSizePreset(rawValue: UserDefaults.standard.string(forKey: "fontSizePreset") ?? "") ?? .lg
         self.fontFamilyPreset = FontFamilyPreset(rawValue: UserDefaults.standard.string(forKey: "fontFamilyPreset") ?? "") ?? .sans
         self.fontColorPreset = FontColorPreset(rawValue: UserDefaults.standard.string(forKey: "fontColorPreset") ?? "") ?? .white

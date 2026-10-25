@@ -1,7 +1,7 @@
 import Foundation
 
-enum SpeechTextAlignment {
-    static func annotationFlags(for words: [String]) -> [Bool] {
+public enum SpeechTextAlignment {
+    public static func annotationFlags(for words: [String]) -> [Bool] {
         var closingAtOrAfter = Array(repeating: false, count: words.count)
         var hasClosing = false
         for index in words.indices.reversed() {
@@ -27,7 +27,7 @@ enum SpeechTextAlignment {
         return flags
     }
 
-    static func annotationRanges(in text: String) -> [Range<Int>] {
+    public static func annotationRanges(in text: String) -> [Range<Int>] {
         var ranges: [Range<Int>] = []
         var openingIndex: Int?
 
@@ -43,7 +43,7 @@ enum SpeechTextAlignment {
         return ranges
     }
 
-    static func advancePastAnnotations(
+    public static func advancePastAnnotations(
         in text: String,
         ranges: [Range<Int>],
         from offset: Int
@@ -83,7 +83,7 @@ enum SpeechTextAlignment {
     /// instead of being dragged back by the brittle character scan that
     /// desyncs over long spans. `shouldCommit` still gates single-strategy
     /// (one result is zero) jumps behind confirmation.
-    static func bestOffset(
+    public static func bestOffset(
         characterResult: Int,
         wordResult: Int,
         agreementTolerance: Int = 20
@@ -94,7 +94,7 @@ enum SpeechTextAlignment {
         return max(characterResult, wordResult)
     }
 
-    static func shouldCommit(
+    public static func shouldCommit(
         characterResult: Int,
         wordResult: Int,
         current: Int,

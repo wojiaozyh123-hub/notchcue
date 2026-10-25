@@ -8,6 +8,7 @@
 import AppKit
 import SwiftUI
 import Combine
+import PrompterCore
 
 /// A nonactivating panel that can still receive keyboard and control events.
 /// This keeps the prompter interactive while another app (for example, a
@@ -43,6 +44,11 @@ class OverlayContent {
     var paragraphBreakBeforeWordIndices: Set<Int> = []
     var totalCharCount: Int = 0
     var hasNextPage: Bool = false
+    /// Classic mode's pause, shared by the views and the ⌃⌥P hotkey.
+    var isPaused: Bool = false
+    /// ⌃⌥←/→ requests for views that drive their own timer (classic and
+    /// voice-activated modes).
+    var phraseStep = PhraseStep()
 
     // Page picker
     var pageCount: Int = 1
@@ -50,6 +56,20 @@ class OverlayContent {
     var pagePreviews: [String] = []
     var showPagePicker: Bool = false
     var jumpToPageIndex: Int? = nil
+}
+
+struct PhraseStep: Equatable {
+    var direction = 0
+    var count = 0
+}
+
+extension OverlayContent {
+    /// Display offset one phrase back (direction < 0) or forward from an
+    /// offset on the current page, or nil when there is nowhere to go.
+    func phraseStepOffset(from offset: Int, direction: Int) -> Int? {
+        TokenizedScript(words: words, paragraphBreakBeforeWordIndices: paragraphBreakBeforeWordIndices)
+            .phraseStepOffset(from: offset, direction: direction)
+    }
 }
 
 class NotchOverlayController: NSObject {
@@ -63,6 +83,7 @@ class NotchOverlayController: NSObject {
     private var cancellables = Set<AnyCancellable>()
     private var isDismissing = false
     private var frameTracker: NotchFrameTracker?
+    private var anchorState: AnchorStripState?
     private var mouseTrackingTimer: AnyCancellable?
     private var cursorTrackingTimer: AnyCancellable?
     private var currentScreenID: UInt32 = 0
@@ -113,6 +134,8 @@ class NotchOverlayController: NSObject {
             switch settings.overlayMode {
             case .pinned:
                 showPinned(settings: settings, screen: screen)
+            case .anchor:
+                showAnchor(settings: settings, screen: screen)
             case .floating:
                 showFloating(settings: settings, screenFrame: screenFrame)
             case .fullscreen:
@@ -130,6 +153,43 @@ class NotchOverlayController: NSObject {
         // Word tracking & silence-paused need the microphone; classic does not
         if settings.listeningMode != .classic {
             speechRecognizer.start(with: text)
+        }
+
+        PrompterHotkeys.shared.register { [weak self] action in
+            self?.handleHotkey(action)
+        }
+    }
+
+    private func handleHotkey(_ action: PrompterHotkeys.Action) {
+        guard isShowing else { return }
+        let mode = NotchSettings.shared.listeningMode
+        switch action {
+        case .togglePause:
+            switch mode {
+            case .classic:
+                overlayContent.isPaused.toggle()
+            case .wordTracking, .silencePaused:
+                // Same as the microphone button.
+                if speechRecognizer.isListening || speechRecognizer.isStarting {
+                    speechRecognizer.stop()
+                } else {
+                    speechRecognizer.resume()
+                }
+            }
+        case .previousPhrase, .nextPhrase:
+            let direction = action == .previousPhrase ? -1 : 1
+            if mode == .wordTracking {
+                guard let offset = overlayContent.phraseStepOffset(
+                    from: speechRecognizer.recognizedCharCount,
+                    direction: direction
+                ) else { return }
+                speechRecognizer.jumpTo(charOffset: offset)
+            } else {
+                overlayContent.phraseStep = PhraseStep(
+                    direction: direction,
+                    count: overlayContent.phraseStep.count &+ 1
+                )
+            }
         }
     }
 
@@ -209,7 +269,7 @@ class NotchOverlayController: NSObject {
     }
 
     private func checkMouseScreen() {
-        guard let panel, let frameTracker else { return }
+        guard let panel, frameTracker != nil || anchorState != nil else { return }
         guard let mouseScreen = screenUnderMouse() else { return }
         let mouseScreenID = mouseScreen.displayID
         guard mouseScreenID != currentScreenID else { return }
@@ -217,6 +277,12 @@ class NotchOverlayController: NSObject {
         // Mouse moved to a different screen — reposition the notch
         // Keep the same panel dimensions since the SwiftUI view's menuBarHeight is fixed
         currentScreenID = mouseScreenID
+        if let anchorState {
+            // The anchor follows that screen's camera (or centre).
+            anchorState.move(to: mouseScreen)
+            return
+        }
+        guard let frameTracker else { return }
         let screenFrame = mouseScreen.frame
 
         frameTracker.screenMidX = screenFrame.midX
@@ -281,6 +347,43 @@ class NotchOverlayController: NSObject {
         self.panel = panel
 
         // Start mouse tracking for follow-mouse mode
+        if settings.notchDisplayMode == .followMouse {
+            startMouseTracking()
+        }
+
+        installKeyMonitor()
+    }
+
+    private func showAnchor(settings: NotchSettings, screen: NSScreen) {
+        let state = AnchorStripState(screen: screen)
+        anchorState = state
+        currentScreenID = screen.displayID
+
+        let anchorView = AnchorOverlayView(
+            content: overlayContent,
+            speechRecognizer: speechRecognizer,
+            strip: state
+        )
+        let panel = PrompterPanel(
+            contentRect: state.layout.frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        state.panel = panel
+
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.level = .screenSaver
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        panel.ignoresMouseEvents = false
+        panel.sharingType = settings.hideFromScreenShare ? .none : .readOnly
+        panel.contentView = NSHostingView(rootView: anchorView)
+
+        panel.orderFrontRegardless()
+        self.panel = panel
+
         if settings.notchDisplayMode == .followMouse {
             startMouseTracking()
         }
@@ -416,9 +519,11 @@ class NotchOverlayController: NSObject {
             self.removeStopButton()
             self.removeEscMonitor()
             self.cancellables.removeAll()
+            PrompterHotkeys.shared.unregister()
             self.panel?.orderOut(nil)
             self.panel = nil
             self.frameTracker = nil
+            self.anchorState = nil
             self.endKeepAwakeActivity()
             self.speechRecognizer.shouldDismiss = false
             self.isDismissing = false
@@ -448,11 +553,14 @@ class NotchOverlayController: NSObject {
         removeStopButton()
         removeEscMonitor()
         cancellables.removeAll()
+        PrompterHotkeys.shared.unregister()
         speechRecognizer.forceStop()
         speechRecognizer.recognizedCharCount = 0
         panel?.orderOut(nil)
         panel = nil
         frameTracker = nil
+        anchorState = nil
+        overlayContent.isPaused = false
         endKeepAwakeActivity()
         speechRecognizer.shouldDismiss = false
         speechRecognizer.shouldAdvancePage = false
@@ -487,9 +595,11 @@ class NotchOverlayController: NSObject {
                         self.removeStopButton()
                         self.removeEscMonitor()
                         self.cancellables.removeAll()
+                        PrompterHotkeys.shared.unregister()
                         self.panel?.orderOut(nil)
                         self.panel = nil
                         self.frameTracker = nil
+            self.anchorState = nil
                         self.endKeepAwakeActivity()
                         self.speechRecognizer.shouldDismiss = false
                         self.onComplete?()
@@ -507,7 +617,7 @@ class NotchOverlayController: NSObject {
                 .idleSystemSleepDisabled,
                 .idleDisplaySleepDisabled
             ],
-            reason: "Textream teleprompter reading session"
+            reason: "刘海提词 teleprompter reading session"
         )
     }
 
@@ -693,7 +803,7 @@ struct NotchOverlayView: View {
 
     // Timer-based scroll for classic & silence-paused modes
     @State private var timerWordProgress: Double = 0
-    @State private var isPaused: Bool = false
+    @State private var timerJumpCount = 0
     @State private var isUserScrolling: Bool = false
     private let scrollTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
 
@@ -889,11 +999,11 @@ struct NotchOverlayView: View {
             let speed = NotchSettings.shared.scrollSpeed // words per second
             switch listeningMode {
             case .classic:
-                if !isPaused {
+                if !content.isPaused {
                     timerWordProgress += speed * 0.05
                 }
             case .silencePaused:
-                if !isPaused && speechRecognizer.isListening && speechRecognizer.isSpeaking {
+                if !content.isPaused && speechRecognizer.isListening && speechRecognizer.isSpeaking {
                     timerWordProgress += speed * 0.05
                 }
             case .wordTracking:
@@ -902,6 +1012,13 @@ struct NotchOverlayView: View {
         }
         .onChange(of: content.totalCharCount) { _, _ in
             timerWordProgress = 0
+        }
+        .onChange(of: content.phraseStep) { _, step in
+            // ⌃⌥←/→ in timer-driven modes; word tracking is moved by the controller.
+            guard listeningMode != .wordTracking,
+                  let offset = content.phraseStepOffset(from: effectiveCharCount, direction: step.direction) else { return }
+            timerWordProgress = wordProgressForCharOffset(offset)
+            timerJumpCount &+= 1
         }
         .onChange(of: content.currentPageIndex) { _, _ in
             timerWordProgress = 0
@@ -914,7 +1031,7 @@ struct NotchOverlayView: View {
         case .wordTracking, .silencePaused:
             return speechRecognizer.isListening
         case .classic:
-            return !isPaused
+            return !content.isPaused
         }
     }
 
@@ -947,7 +1064,10 @@ struct NotchOverlayView: View {
                 readingPosition: NotchSettings.shared.readingPosition,
                 paragraphBreakBeforeWordIndices: NotchSettings.shared.showParagraphDividers
                     ? content.paragraphBreakBeforeWordIndices
-                    : []
+                    : [],
+                explicitMoveCount: listeningMode == .wordTracking
+                    ? speechRecognizer.cursorJumpCount
+                    : timerJumpCount
             )
             .id(content.currentPageIndex)
             .padding(.horizontal, 12)
@@ -1038,11 +1158,11 @@ struct NotchOverlayView: View {
 
                 if listeningMode == .classic {
                     Button {
-                        isPaused.toggle()
+                        content.isPaused.toggle()
                     } label: {
-                        Image(systemName: isPaused ? "play.fill" : "pause.fill")
+                        Image(systemName: content.isPaused ? "play.fill" : "pause.fill")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(isPaused ? .white.opacity(0.6) : .yellow.opacity(0.8))
+                            .foregroundStyle(content.isPaused ? .white.opacity(0.6) : .yellow.opacity(0.8))
                             .frame(width: 24, height: 24)
                             .background(.white.opacity(0.15))
                             .clipShape(Circle())
@@ -1289,7 +1409,7 @@ struct FloatingOverlayView: View {
 
     // Timer-based scroll for classic & silence-paused modes
     @State private var timerWordProgress: Double = 0
-    @State private var isPaused: Bool = false
+    @State private var timerJumpCount = 0
     @State private var isUserScrolling: Bool = false
     private let scrollTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
 
@@ -1343,7 +1463,7 @@ struct FloatingOverlayView: View {
         case .wordTracking, .silencePaused:
             return speechRecognizer.isListening
         case .classic:
-            return !isPaused
+            return !content.isPaused
         }
     }
 
@@ -1419,11 +1539,11 @@ struct FloatingOverlayView: View {
             let speed = NotchSettings.shared.scrollSpeed // words per second
             switch listeningMode {
             case .classic:
-                if !isPaused {
+                if !content.isPaused {
                     timerWordProgress += speed * 0.05
                 }
             case .silencePaused:
-                if !isPaused && speechRecognizer.isListening && speechRecognizer.isSpeaking {
+                if !content.isPaused && speechRecognizer.isListening && speechRecognizer.isSpeaking {
                     timerWordProgress += speed * 0.05
                 }
             case .wordTracking:
@@ -1432,6 +1552,13 @@ struct FloatingOverlayView: View {
         }
         .onChange(of: content.totalCharCount) { _, _ in
             timerWordProgress = 0
+        }
+        .onChange(of: content.phraseStep) { _, step in
+            // ⌃⌥←/→ in timer-driven modes; word tracking is moved by the controller.
+            guard listeningMode != .wordTracking,
+                  let offset = content.phraseStepOffset(from: effectiveCharCount, direction: step.direction) else { return }
+            timerWordProgress = wordProgressForCharOffset(offset)
+            timerJumpCount &+= 1
         }
         .onChange(of: content.currentPageIndex) { _, _ in
             timerWordProgress = 0
@@ -1468,7 +1595,10 @@ struct FloatingOverlayView: View {
                 readingPosition: NotchSettings.shared.readingPosition,
                 paragraphBreakBeforeWordIndices: NotchSettings.shared.showParagraphDividers
                     ? content.paragraphBreakBeforeWordIndices
-                    : []
+                    : [],
+                explicitMoveCount: listeningMode == .wordTracking
+                    ? speechRecognizer.cursorJumpCount
+                    : timerJumpCount
             )
             .id(content.currentPageIndex)
             .padding(.horizontal, 16)
@@ -1546,11 +1676,11 @@ struct FloatingOverlayView: View {
                 if !followingCursor {
                     if listeningMode == .classic {
                         Button {
-                            isPaused.toggle()
+                            content.isPaused.toggle()
                         } label: {
-                            Image(systemName: isPaused ? "play.fill" : "pause.fill")
+                            Image(systemName: content.isPaused ? "play.fill" : "pause.fill")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(isPaused ? .white.opacity(0.6) : .yellow.opacity(0.8))
+                                .foregroundStyle(content.isPaused ? .white.opacity(0.6) : .yellow.opacity(0.8))
                                 .frame(width: 24, height: 24)
                                 .background(.white.opacity(0.15))
                                 .clipShape(Circle())
