@@ -76,8 +76,7 @@
 - **用音频文件快速跑一遍…**：交给 Apple 的文件识别，几秒跑完一整段录音，适合出日志。
 - **按实际速度回放音频文件…**：把录音按真实速度播放，走和麦克风完全一样的流程，能看到刘海上字怎么流。
 
-每次跑完会保存一份日志（每条识别结果和光标位置），并在 Finder 里打开：
-`~/Library/Containers/app.notchcue.mac/Data/Library/Application Support/DebugRuns/`
+每次跑完会保存一份日志（每条识别结果和光标位置），并在 Finder 里打开它所在的文件夹：发布版在 `~/Library/Application Support/app.notchcue.mac/DebugRuns/`，从 Xcode 运行的开发版在 app 的沙盒容器里（`~/Library/Containers/app.notchcue.mac/Data/Library/Application Support/app.notchcue.mac/DebugRuns/`）。
 
 把日志放进 `Textream/Packages/PrompterCore/Tests/PrompterCoreTests/Fixtures/`，就会变成一条回放这段真实录音的回归测试。`debug-samples/` 里有一份示例稿子和两段录音（照读一遍；带即兴插话并跳过一句）。
 

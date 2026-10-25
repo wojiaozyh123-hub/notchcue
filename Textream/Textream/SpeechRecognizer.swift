@@ -1033,8 +1033,11 @@ class SpeechRecognizer {
 
     private func saveRunLog(_ log: RecognitionRunLog, audioURL: URL) {
         do {
+            // The app's own folder: outside the sandbox (Developer ID builds)
+            // Application Support is shared by every app.
             let directory = try FileManager.default
                 .url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+                .appendingPathComponent(Bundle.main.bundleIdentifier ?? "app.notchcue.mac", isDirectory: true)
                 .appendingPathComponent("DebugRuns", isDirectory: true)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             let formatter = DateFormatter()
