@@ -1,67 +1,28 @@
-# Security Policy
+# 安全说明
 
-## Supported Versions
+## 报告漏洞
 
-| Version | Supported |
-|---------|-----------|
-| Latest release | ✅ |
-| Older releases | ❌ |
+发现安全问题请不要开公开 issue，请在仓库的 **Security → Report a vulnerability** 私下报告。
 
-Only the latest release receives security updates. Please keep Textream up to date.
+## 数据去向
 
-## Reporting a Vulnerability
+- **语音**：识别用的是 Apple 的 Speech 框架。逐字跟随没有强制只在本机识别，所以麦克风音频可能由 Apple 的服务器处理，遵循 Apple 的隐私政策。「调试」菜单的快速模式在系统支持时会要求只在本机识别。
+- **稿子和设置**只存在本机：设置在 app 的沙盒容器里，稿子存在你保存的文件里。
+- 没有账号、统计或遥测；原版的自动检查更新已经去掉，app 自己不会主动联网。
 
-If you discover a security vulnerability in Textream, **please do not open a public issue.**
+## 可选的局域网服务
 
-Instead, report it privately:
+两项服务默认都关闭，需要在设置里手动打开；打开后会在本机所有网络接口上监听：
 
-- **Email:** [fka@fka.dev](mailto:fka@fka.dev)
-- **Subject:** `[SECURITY] Textream — <brief description>`
+| 服务 | 默认端口 | 用途 | 访问控制 |
+|---|---|---|---|
+| 网页遥控（Remote） | 7373（网页）/ 7374（WebSocket） | 在浏览器里只读同步显示提词 | 无，同一网络里的任何人都能看 |
+| 导演模式（Director） | 7575（网页）/ 7576（WebSocket） | 在别的设备上远程改稿 | 网页里带一个令牌，每次重启服务会换；能打开网页的人就能拿到 |
 
-Please include:
+只在可信的私人网络里打开它们，用完关掉。
 
-1. A description of the vulnerability
-2. Steps to reproduce the issue
-3. Potential impact
-4. Suggested fix (if any)
+## 权限
 
-You should receive an acknowledgment within **48 hours**. Once confirmed, a fix will be prioritized and released as soon as possible.
-
-## Security Considerations
-
-### On-Device Processing
-
-All speech recognition runs locally via Apple's Speech framework. No audio data, transcripts, or scripts are sent to external servers. There are no accounts, analytics, or telemetry.
-
-### Network Servers
-
-Textream includes two optional network servers that bind to your **local network only**:
-
-| Server | Default Port | Purpose |
-|--------|-------------|---------|
-| **Remote Connection** (BrowserServer) | `8080` | Read-only teleprompter mirror for a browser |
-| **Director Mode** (DirectorServer) | `7575` / `7576` | Remote script editing via HTTP + WebSocket |
-
-**Important:**
-
-- Both servers are **disabled by default** and must be explicitly enabled in Settings.
-- Servers listen on **all local interfaces** (`0.0.0.0`). Anyone on the same network can connect when enabled.
-- There is **no authentication** on these servers. Do not enable them on untrusted or public networks.
-- The HTTP server serves a single-page web UI. The WebSocket server handles real-time communication.
-- Disable the servers when not in use.
-
-### Permissions
-
-Textream requests the following macOS permissions:
-
-- **Microphone** — Required for speech recognition and voice-activated features.
-- **Speech Recognition** — Required for on-device word tracking.
-- **Local Network** — Required when Remote Connection or Director Mode is enabled.
-
-No other permissions are requested or required.
-
-## Recommendations
-
-- Only enable network servers on trusted private networks.
-- Disable Remote Connection and Director Mode when not actively in use.
-- Keep Textream updated to the latest version via Homebrew or GitHub Releases.
+- **麦克风**：逐字跟随和声控滚动需要。
+- **语音识别**：逐字跟随需要。
+- **本地网络**：打开网页遥控或导演模式时需要。
