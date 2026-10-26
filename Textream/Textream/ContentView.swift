@@ -31,13 +31,11 @@ struct ContentView: View {
     // Mandarin: an English welcome page made the language check suggest
     // switching recognition to English.
     private let defaultText = """
-欢迎使用刘海提词！[微笑]
+把你的稿子贴在这里，按 ⌘↩ 开始，对着麦克风读。
 
-把稿子贴在这里，按 ⌘↩ 开始，对着麦克风读就行。你读到哪个字，那个字就停在摄像头正下方，后面的字一个接一个流过来。[停顿]
+你读到哪个字，那个字就停在摄像头正下方，后面的字一个接一个流过来。读错几个字、中间插几句话、跳过一句，都没关系，它会自己跟上。
 
-读错几个字、中间插几句话、跳过一句，都没关系，它会自己跟上。数字怎么读都行，比如 2026 年。
-
-想回到这一句开头，按 ⌃⌥←；想暂停，按 ⌃⌥P。读完最后一个字，它会自己收起来。[点头]
+想回到这一句开头，按 ⌃⌥←；想暂停，按 ⌃⌥P。读完最后一个字，它会自己收起来。
 """
 
     private var languageLabel: String {
