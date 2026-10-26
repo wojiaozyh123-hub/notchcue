@@ -5,9 +5,10 @@
 //  Where the anchor display sits. The anchor (the next word to read) is
 //  horizontally under the camera, the centre of the notch, found from the
 //  screen areas left and right of it; screens without a notch use their
-//  centre. The black strip hangs from the top of the screen, starts at the
-//  notch's left edge (or a few characters left of the anchor, whichever is
-//  wider) and extends right far enough for the preview.
+//  centre. The black strip hangs from the top of the screen and is centred
+//  on the anchor, wide enough for the preview on the right and the same on
+//  the left, so the whole strip reads as centred under the camera. A user
+//  offset moves anchor and strip together.
 //
 
 import CoreGraphics
@@ -25,7 +26,6 @@ public struct AnchorStripLayout: Equatable, Sendable {
 
     static let lineGap: CGFloat = 4
     static let bottomPadding: CGFloat = 8
-    static let readCharacters: CGFloat = 3.5
     static let edgePadding: CGFloat = 16
 
     public init(
@@ -36,43 +36,42 @@ public struct AnchorStripLayout: Equatable, Sendable {
         notchRightArea: CGRect?,
         fontSize: CGFloat,
         lineHeight: CGFloat,
-        previewCount: Int
+        previewCount: Int,
+        horizontalOffset: CGFloat = 0
     ) {
         let cameraX: CGFloat
-        let notchMinX: CGFloat
         let topInset: CGFloat
         if let left = notchLeftArea, let right = notchRightArea, safeAreaTop > 0, right.minX > left.maxX {
-            notchMinX = left.maxX
             cameraX = (left.maxX + right.minX) / 2
             topInset = safeAreaTop
         } else {
             cameraX = screenFrame.midX
-            notchMinX = cameraX
             topInset = max(0, screenFrame.maxY - visibleFrame.maxY)
         }
 
-        let leftExtent = min(
-            max(Self.readCharacters * fontSize, cameraX - notchMinX + 6),
-            cameraX - screenFrame.minX
+        let halfWidth = fontSize / 2 + CGFloat(previewCount) * fontSize + Self.edgePadding
+        // The anchor itself always stays on screen; the strip is cut at the
+        // screen edges.
+        let anchorScreenX = min(
+            max(cameraX + horizontalOffset, screenFrame.minX + fontSize),
+            screenFrame.maxX - fontSize
         )
-        let rightExtent = min(
-            fontSize / 2 + CGFloat(previewCount) * fontSize + Self.edgePadding,
-            screenFrame.maxX - cameraX
-        )
+        let left = max(screenFrame.minX, anchorScreenX - halfWidth)
+        let right = min(screenFrame.maxX, anchorScreenX + halfWidth)
         let height = topInset + Self.lineGap + lineHeight + Self.bottomPadding
 
         self.frame = CGRect(
-            x: cameraX - leftExtent,
+            x: left,
             y: screenFrame.maxY - height,
-            width: leftExtent + rightExtent,
+            width: right - left,
             height: height
         )
-        self.anchorX = leftExtent
+        self.anchorX = anchorScreenX - left
         self.topInset = topInset
         self.lineTop = topInset + Self.lineGap
         self.lineHeight = lineHeight
     }
 
-    /// The camera's x in screen coordinates.
-    public var cameraX: CGFloat { frame.minX + anchorX }
+    /// The anchor's x in screen coordinates: the camera, plus any offset.
+    public var anchorScreenX: CGFloat { frame.minX + anchorX }
 }

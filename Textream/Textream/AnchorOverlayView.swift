@@ -276,13 +276,14 @@ final class AnchorStripState {
             notchRightArea: screen.auxiliaryTopRightArea,
             fontSize: font.pointSize,
             lineHeight: ceil(font.ascender - font.descender + font.leading),
-            previewCount: settings.anchorPreviewCount
+            previewCount: settings.anchorPreviewCount,
+            horizontalOffset: CGFloat(settings.anchorOffset)
         )
     }
 }
 
 /// The black strip, square at the top where it meets the screen edge and the
-/// notch, rounded at the bottom.
+/// notch, rounded at the bottom. Centred on the anchor.
 struct AnchorStripShape: Shape {
     func path(in rect: CGRect) -> Path {
         UnevenRoundedRectangle(
@@ -398,6 +399,7 @@ struct AnchorOverlayView: View {
         }
         .onChange(of: settings.anchorFontSize) { _, _ in strip.refresh() }
         .onChange(of: settings.anchorPreviewCount) { _, _ in strip.refresh() }
+        .onChange(of: settings.anchorOffset) { _, _ in strip.refresh() }
         .onChange(of: settings.fontFamilyPreset) { _, _ in strip.refresh() }
         .onChange(of: content.phraseStep) { _, step in
             // ⌃⌥←/→ in timer-driven modes; word tracking is moved by the controller.

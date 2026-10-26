@@ -787,6 +787,12 @@ struct SettingsView: View {
             readout: "\(settings.anchorPreviewCount)"
         )
         anchorSlider(
+            "左右位置",
+            value: $settings.anchorOffset,
+            range: NotchSettings.anchorOffsetRange,
+            readout: settings.anchorOffset == 0 ? "居中" : String(format: "%+d pt", Int(settings.anchorOffset))
+        )
+        anchorSlider(
             "推进速度上限",
             value: $settings.anchorMaxSpeed,
             range: NotchSettings.anchorMaxSpeedRange,
@@ -1590,6 +1596,7 @@ struct SettingsView: View {
         settings.anchorFontSize = NotchSettings.defaultAnchorFontSize
         settings.anchorPreviewCount = NotchSettings.defaultAnchorPreviewCount
         settings.anchorMaxSpeed = NotchSettings.defaultAnchorMaxSpeed
+        settings.anchorOffset = 0
         settings.fontSizePreset = .lg
         settings.fontFamilyPreset = .sans
         settings.fontColorPreset = .white

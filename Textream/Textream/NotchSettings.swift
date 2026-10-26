@@ -364,6 +364,11 @@ class NotchSettings {
         didSet { UserDefaults.standard.set(anchorPreviewCount, forKey: "anchorPreviewCount") }
     }
 
+    /// Anchor mode: horizontal shift of the anchor from the camera, in points.
+    var anchorOffset: Double {
+        didSet { UserDefaults.standard.set(anchorOffset, forKey: "anchorOffset") }
+    }
+
     /// Anchor mode: fastest the line moves while catching up, in words per second.
     var anchorMaxSpeed: Double {
         didSet { UserDefaults.standard.set(anchorMaxSpeed, forKey: "anchorMaxSpeed") }
@@ -518,6 +523,7 @@ class NotchSettings {
     static let anchorFontSizeRange: ClosedRange<Double> = 18...40
     static let anchorPreviewCountRange: ClosedRange<Int> = 8...20
     static let anchorMaxSpeedRange: ClosedRange<Double> = 4...16
+    static let anchorOffsetRange: ClosedRange<Double> = -300...300
     static let defaultAnchorFontSize: Double = 26
     static let defaultAnchorPreviewCount = 12
     static let defaultAnchorMaxSpeed: Double = 8
@@ -548,6 +554,8 @@ class NotchSettings {
         let savedAnchorPreviewCount = UserDefaults.standard.integer(forKey: "anchorPreviewCount")
         self.anchorPreviewCount = Self.anchorPreviewCountRange.contains(savedAnchorPreviewCount)
             ? savedAnchorPreviewCount : Self.defaultAnchorPreviewCount
+        let savedAnchorOffset = UserDefaults.standard.double(forKey: "anchorOffset")
+        self.anchorOffset = Self.anchorOffsetRange.contains(savedAnchorOffset) ? savedAnchorOffset : 0
         let savedAnchorMaxSpeed = UserDefaults.standard.double(forKey: "anchorMaxSpeed")
         self.anchorMaxSpeed = Self.anchorMaxSpeedRange.contains(savedAnchorMaxSpeed)
             ? savedAnchorMaxSpeed : Self.defaultAnchorMaxSpeed

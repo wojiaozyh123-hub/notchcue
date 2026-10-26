@@ -73,37 +73,42 @@ struct AnchorStripLayoutTests {
     private let left = CGRect(x: 0, y: 950, width: 663, height: 32)
     private let right = CGRect(x: 848, y: 950, width: 664, height: 32)
 
-    @Test func anchorSitsUnderTheCamera() {
+    @Test func stripIsCentredUnderTheCamera() {
         let layout = AnchorStripLayout(screenFrame: screen, visibleFrame: visible, safeAreaTop: 32,
                                        notchLeftArea: left, notchRightArea: right,
                                        fontSize: 26, lineHeight: 32, previewCount: 12)
-        #expect(layout.cameraX == 755.5)
+        #expect(layout.anchorScreenX == 755.5)
+        #expect(layout.frame.midX == 755.5)
         #expect(layout.topInset == 32)
         #expect(layout.lineTop == 36)
         // Hangs from the top of the screen.
         #expect(layout.frame.maxY == 982)
         let expectedHeight: CGFloat = 32 + 4 + 32 + 8
         #expect(layout.frame.height == expectedHeight)
-        // Starts just left of the notch, extends right for the preview.
-        let expectedMinX: CGFloat = 663 - 6
-        let expectedMaxX: CGFloat = 755.5 + 13 + 312 + 16
-        #expect(layout.frame.minX == expectedMinX)
-        #expect(layout.frame.maxX == expectedMaxX)
+        // Half a character, twelve previewed characters and padding each side.
+        let expectedHalfWidth: CGFloat = 13 + 312 + 16
+        #expect(layout.frame.width == 2 * expectedHalfWidth)
     }
 
-    @Test func largeFontReachesFurtherLeft() {
+    @Test func offsetMovesAnchorAndStripTogether() {
         let layout = AnchorStripLayout(screenFrame: screen, visibleFrame: visible, safeAreaTop: 32,
                                        notchLeftArea: left, notchRightArea: right,
-                                       fontSize: 40, lineHeight: 48, previewCount: 12)
-        let expectedAnchor: CGFloat = 140
-        #expect(layout.anchorX == expectedAnchor)
+                                       fontSize: 26, lineHeight: 32, previewCount: 12,
+                                       horizontalOffset: -40)
+        let expectedAnchor: CGFloat = 715.5
+        #expect(layout.anchorScreenX == expectedAnchor)
+        #expect(layout.frame.midX == expectedAnchor)
     }
 
-    @Test func stripStaysOnScreen() {
+    @Test func stripIsCutAtTheScreenEdge() {
         let layout = AnchorStripLayout(screenFrame: screen, visibleFrame: visible, safeAreaTop: 32,
                                        notchLeftArea: left, notchRightArea: right,
-                                       fontSize: 40, lineHeight: 48, previewCount: 20)
+                                       fontSize: 40, lineHeight: 48, previewCount: 20,
+                                       horizontalOffset: 600)
+        #expect(layout.frame.minX >= screen.minX)
         #expect(layout.frame.maxX <= screen.maxX)
+        // The anchor itself stays on screen.
+        #expect(layout.anchorScreenX <= screen.maxX - 40)
     }
 
     @Test func screensWithoutANotchUseTheCentre() {
@@ -112,7 +117,7 @@ struct AnchorStripLayoutTests {
         let layout = AnchorStripLayout(screenFrame: external, visibleFrame: externalVisible, safeAreaTop: 0,
                                        notchLeftArea: nil, notchRightArea: nil,
                                        fontSize: 26, lineHeight: 32, previewCount: 12)
-        #expect(layout.cameraX == external.midX)
+        #expect(layout.anchorScreenX == external.midX)
         #expect(layout.topInset == 25)
         #expect(layout.frame.maxY == external.maxY)
     }
