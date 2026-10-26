@@ -257,7 +257,7 @@ class SpeechRecognizer {
         // Check microphone permission first
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .denied, .restricted:
-            failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow 刘海提词.")
+            failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow 提词器.")
             openMicrophoneSettings()
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
@@ -268,7 +268,7 @@ class SpeechRecognizer {
                     if granted {
                         self.beginAfterMicrophoneAccess(for: generation)
                     } else {
-                        self.failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow 刘海提词.")
+                        self.failListening("Microphone access denied. Open System Settings → Privacy & Security → Microphone to allow 提词器.")
                     }
                 }
             }
@@ -298,7 +298,7 @@ class SpeechRecognizer {
                 case .authorized:
                     self.beginRecognition()
                 default:
-                    self.failListening("Speech recognition not authorized. Open System Settings → Privacy & Security → Speech Recognition to allow 刘海提词.")
+                    self.failListening("Speech recognition not authorized. Open System Settings → Privacy & Security → Speech Recognition to allow 提词器.")
                     self.openSpeechRecognitionSettings()
                 }
             }

@@ -834,7 +834,7 @@ struct AboutView: View {
 
             // App name & version
             VStack(spacing: 4) {
-                Text("刘海提词")
+                Text("提词器")
                     .font(.system(size: 20, weight: .bold))
                 Text("Version \(appVersion)")
                     .font(.system(size: 12))

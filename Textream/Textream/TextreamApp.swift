@@ -158,7 +158,7 @@ struct TextreamApp: App {
 
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("About 刘海提词") {
+                Button("About 提词器") {
                     NotificationCenter.default.post(name: .openAbout, object: nil)
                 }
             }
@@ -203,7 +203,7 @@ struct TextreamApp: App {
             }
             CommandGroup(replacing: .windowArrangement) { }
             CommandGroup(replacing: .help) {
-                Button("刘海提词 Help") {
+                Button("提词器 Help") {
                     if let url = URL(string: "https://github.com/wojiaozyh123-hub/notchcue#使用") {
                         NSWorkspace.shared.open(url)
                     }

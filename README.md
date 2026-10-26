@@ -1,8 +1,8 @@
-# 刘海提词 NotchCue
+# 提词器 NotchCue
 
-中文优先的 MacBook 刘海提词器。你读到哪个字，那个字就停在摄像头正下方。
+中文优先的 MacBook 提词器，挂在刘海下面。你读到哪个字，那个字就停在摄像头正下方。
 
-录视频、上网课、开视频会议时看稿子，普通提词器是一整段字，眼睛要从左扫到右、一行行往下移，对面的人看得出你在读稿。刘海提词把**下一个要读的字固定在摄像头正下方**，后面的字一个接一个流过来，读过的往左淡出。眼睛一直盯着镜头下面同一个点，看起来就是在直视镜头。
+录视频、上网课、开视频会议时看稿子，普通提词器是一整段字，眼睛要从左扫到右、一行行往下移，对面的人看得出你在读稿。这个提词器把**下一个要读的字固定在摄像头正下方**，后面的字一个接一个流过来，读过的往左淡出。眼睛一直盯着镜头下面同一个点，看起来就是在直视镜头。
 
 基于开源提词器 [Textream](https://github.com/f/textream) 改造，见文末[致谢与许可](#致谢与许可)。
 
@@ -136,6 +136,6 @@ xattr -dr com.apple.quarantine /Applications/NotchCue.app
 
 ## English
 
-**NotchCue (刘海提词)** is a Chinese-first teleprompter for the MacBook notch, forked from [Textream](https://github.com/f/textream). In its anchor mode the next word to read always sits right under the camera while the rest of the script flows toward it, so your eyes stay on the lens. Speech following is rebuilt for Mandarin: matching by pinyin (homophones and common polyphones), spoken forms of numbers, mixed Chinese and English, ad-libs that don't move the cursor, and skipped sentences that are picked up again. Global shortcuts: ⌃⌥P pause, ⌃⌥← / ⌃⌥→ previous / next phrase. Other languages keep Textream's original follower unchanged.
+**NotchCue (提词器)** is a Chinese-first teleprompter for the MacBook notch, forked from [Textream](https://github.com/f/textream). In its anchor mode the next word to read always sits right under the camera while the rest of the script flows toward it, so your eyes stay on the lens. Speech following is rebuilt for Mandarin: matching by pinyin (homophones and common polyphones), spoken forms of numbers, mixed Chinese and English, ad-libs that don't move the cursor, and skipped sentences that are picked up again. Global shortcuts: ⌃⌥P pause, ⌃⌥← / ⌃⌥→ previous / next phrase. Other languages keep Textream's original follower unchanged.
 
 Download the DMG or ZIP from [Releases](https://github.com/wojiaozyh123-hub/notchcue/releases/latest) (macOS 15+, Apple silicon and Intel). The app is signed with Developer ID; Apple notarization is still pending, so on first launch choose Done, then System Settings → Privacy & Security → Open Anyway. Or build from source with Xcode 26: open `Textream/Textream.xcodeproj`, set your own signing team, run the **Textream** scheme. Alignment logic and its tests live in `Textream/Packages/PrompterCore` (`swift test`). MIT licensed, like Textream.
