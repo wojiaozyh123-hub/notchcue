@@ -20,22 +20,24 @@ struct ContentView: View {
     @State private var dropError: String?
     @State private var dropAlertTitle: String = "Import Error"
     @State private var showSettings = false
+    @State private var settingsTab: SettingsTab = .appearance
     @State private var showAbout = false
     @State private var languageSuggestion: SpeechLanguageSuggestion?
     @State private var ignoredLanguageIdentifier: String?
     @State private var languageDetectionTask: Task<Void, Never>?
     @FocusState private var isTextFocused: Bool
 
+    // The first page of a new install. Chinese, since speech defaults to
+    // Mandarin: an English welcome page made the language check suggest
+    // switching recognition to English.
     private let defaultText = """
-Welcome to 刘海提词! This is your personal teleprompter that sits right below your MacBook's notch. [smile]
+欢迎使用刘海提词！[微笑]
 
-As you read aloud, the text will highlight in real-time, following your voice. The speech recognition matches your words and keeps track of your progress. [pause]
+把稿子贴在这里，按 ⌘↩ 开始，对着麦克风读就行。你读到哪个字，那个字就停在摄像头正下方，后面的字一个接一个流过来。[停顿]
 
-You can pause at any time, go back and re-read sections, and the highlighting will follow along. When you finish reading all the text, the overlay will automatically close with a smooth animation. [nod]
+读错几个字、中间插几句话、跳过一句，都没关系，它会自己跟上。数字怎么读都行，比如 2026 年。
 
-Try reading this passage out loud to see how the highlighting works. The waveform at the bottom shows your voice activity, and you'll see the last few words you spoke displayed next to it.
-
-Happy presenting! [wave]
+想回到这一句开头，按 ⌃⌥←；想暂停，按 ⌃⌥P。读完最后一个字，它会自己收起来。[点头]
 """
 
     private var languageLabel: String {
@@ -476,6 +478,7 @@ Happy presenting! [wave]
             Spacer()
 
             Button {
+                settingsTab = .appearance
                 showSettings = true
             } label: {
                 Text("Open Settings")
@@ -572,6 +575,8 @@ Happy presenting! [wave]
                     .buttonStyle(.plain)
 
                     Button {
+                        // Shows the speech language, so open where it is set.
+                        settingsTab = .guidance
                         showSettings = true
                     } label: {
                         HStack(spacing: 4) {
@@ -591,7 +596,7 @@ Happy presenting! [wave]
             }
         }
         .sheet(isPresented: $showSettings) {
-            SettingsView(settings: NotchSettings.shared)
+            SettingsView(settings: NotchSettings.shared, initialTab: settingsTab)
         }
         .sheet(isPresented: $showAbout) {
             AboutView()
@@ -604,6 +609,7 @@ Happy presenting! [wave]
             run()
         }
         .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
+            settingsTab = .appearance
             showSettings = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .openAbout)) { _ in

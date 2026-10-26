@@ -469,20 +469,19 @@ struct AnchorOverlayView: View {
 
 // MARK: - Settings preview
 
-/// The strip as it will appear, reading a sample script by itself, so font
-/// size, preview length and speed can be judged while changing them.
+/// The strip as it will appear, holding still on a sample line, so font size,
+/// preview length and position can be judged while changing them. It does not
+/// play: a moving line looked as if the prompter had started by itself.
 struct AnchorPreviewStrip: View {
     @Bindable var settings: NotchSettings
     let screen: NSScreen
 
     private static let sampleText = "大家好，今天我们来聊一聊期中考试的安排。考试时间是2026年11月3日，地点在三号楼。请大家提前十分钟到场，带好学生证和iPhone以外的计时工具。"
     private static let sampleWords = splitTextIntoWords(sampleText)
+    /// Rest on 今, so a phrase sits on the anchor and the preview runs right.
+    private static let sampleCursor = 3.0
 
     @State private var playhead = AnchorPlayhead()
-    @State private var progress = 0
-    @State private var loop = 0
-    // Recognition arrives in bursts; the preview does too, two words at a time.
-    private let burstTimer = Timer.publish(every: 0.45, on: .main, in: .common).autoconnect()
 
     var body: some View {
         let layout = AnchorStripState.layout(for: screen)
@@ -492,8 +491,8 @@ struct AnchorPreviewStrip: View {
             AnchorLineView(
                 layout: lineLayout,
                 playhead: playhead,
-                target: Double(progress),
-                jumpCount: loop,
+                target: Self.sampleCursor,
+                jumpCount: 0,
                 anchorX: layout.anchorX,
                 previewCount: settings.anchorPreviewCount,
                 maxSpeed: settings.anchorMaxSpeed,
@@ -507,14 +506,5 @@ struct AnchorPreviewStrip: View {
         .clipShape(AnchorStripShape())
         .offset(x: layout.frame.minX - screen.frame.minX)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .onReceive(burstTimer) { _ in
-            let count = lineLayout.script.tokens.count
-            if progress >= count {
-                progress = 0
-                loop &+= 1
-            } else {
-                progress = min(count, progress + 2)
-            }
-        }
     }
 }

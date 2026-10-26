@@ -396,8 +396,13 @@ struct SettingsView: View {
     @Bindable var settings: NotchSettings
     @Environment(\.dismiss) private var dismiss
     @State private var previewController = NotchPreviewController()
-    @State private var selectedTab: SettingsTab = .appearance
+    @State private var selectedTab: SettingsTab
     @State private var showResetConfirmation = false
+
+    init(settings: NotchSettings, initialTab: SettingsTab = .appearance) {
+        self.settings = settings
+        _selectedTab = State(initialValue: initialTab)
+    }
 
     var body: some View {
         HStack(spacing: 0) {
