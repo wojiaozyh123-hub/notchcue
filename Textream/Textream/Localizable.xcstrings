@@ -1,0 +1,1262 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "%lld words/s": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 字/秒"
+          }
+        }
+      }
+    },
+    "1 second": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 秒"
+          }
+        }
+      }
+    },
+    "3 seconds": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 秒"
+          }
+        }
+      }
+    },
+    "5 seconds": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 秒"
+          }
+        }
+      }
+    },
+    "A draggable window you can place anywhere. Always on top.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以拖到任何位置的窗口，总在最前面。"
+          }
+        }
+      }
+    },
+    "Advanced": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高级"
+          }
+        }
+      }
+    },
+    "Amount": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "程度"
+          }
+        }
+      }
+    },
+    "Anchored below the notch at the top of your screen.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "挂在屏幕顶部的刘海下面，多行显示。"
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外观"
+          }
+        }
+      }
+    },
+    "Auto Next Page": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动翻页"
+          }
+        }
+      }
+    },
+    "Auto-scrolls at a constant speed. No microphone needed.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按固定速度自动滚动，不用麦克风。"
+          }
+        }
+      }
+    },
+    "Automatically advance to the next page after a countdown.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读完一页后，倒计时结束自动翻到下一页。"
+          }
+        }
+      }
+    },
+    "Blue": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "蓝"
+          }
+        }
+      }
+    },
+    "Both": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上下左右"
+          }
+        }
+      }
+    },
+    "Bright": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "亮"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        }
+      }
+    },
+    "Centered": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "居中"
+          }
+        }
+      }
+    },
+    "Classic": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匀速滚动"
+          }
+        }
+      }
+    },
+    "Countdown": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒计时"
+          }
+        }
+      }
+    },
+    "Cue Brightness": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提示亮度"
+          }
+        }
+      }
+    },
+    "Cue Color": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提示颜色"
+          }
+        }
+      }
+    },
+    "Dim": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗"
+          }
+        }
+      }
+    },
+    "Dimensions": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尺寸"
+          }
+        }
+      }
+    },
+    "Director": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导演模式"
+          }
+        }
+      }
+    },
+    "Director Mode lets a remote person control your teleprompter script in real-time via a web browser. The editor will be disabled while active.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导演模式让另一个人用浏览器实时修改你的提词稿。开启期间，这边的编辑器不能用。"
+          }
+        }
+      }
+    },
+    "Display": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示器"
+          }
+        }
+      }
+    },
+    "Display a running timer while the teleprompter is active.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提词时显示已经用了多长时间。"
+          }
+        }
+      }
+    },
+    "Display recently recognized words while using Word Tracking.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逐字跟随时，显示刚识别到的话。"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
+          }
+        }
+      }
+    },
+    "Dyslexia": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "易读体"
+          }
+        }
+      }
+    },
+    "Elapsed Time": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计时"
+          }
+        }
+      }
+    },
+    "Enable Director Mode": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启导演模式"
+          }
+        }
+      }
+    },
+    "Enable Remote Connection": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启网页遥控"
+          }
+        }
+      }
+    },
+    "External": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外接屏"
+          }
+        }
+      }
+    },
+    "Faster": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更快"
+          }
+        }
+      }
+    },
+    "Fixed Display": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "固定显示器"
+          }
+        }
+      }
+    },
+    "Flipped left-to-right. Standard for prompter mirror rigs.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左右翻转，提词反光镜一般用这个。"
+          }
+        }
+      }
+    },
+    "Flipped on both axes (rotated 180°).": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上下左右都翻转（相当于旋转 180°）。"
+          }
+        }
+      }
+    },
+    "Flipped top-to-bottom.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上下翻转。"
+          }
+        }
+      }
+    },
+    "Floating Window": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浮动窗口"
+          }
+        }
+      }
+    },
+    "Follow Cursor": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随鼠标"
+          }
+        }
+      }
+    },
+    "Follow Mouse": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随鼠标"
+          }
+        }
+      }
+    },
+    "Font": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字体"
+          }
+        }
+      }
+    },
+    "Font Size": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字号"
+          }
+        }
+      }
+    },
+    "Fullscreen": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全屏"
+          }
+        }
+      }
+    },
+    "Fullscreen teleprompter on the selected display.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在选定的显示器上全屏提词。"
+          }
+        }
+      }
+    },
+    "Fullscreen teleprompter on the selected display. Press Esc to stop.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在选定的显示器上全屏提词，按 Esc 停止。"
+          }
+        }
+      }
+    },
+    "Fuzzy pinyin (z/zh, c/ch, s/sh, n/l, an/ang, en/eng, in/ing)": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模糊音（z/zh、c/ch、s/sh、n/l、an/ang、en/eng、in/ing）"
+          }
+        }
+      }
+    },
+    "Glass Effect": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毛玻璃效果"
+          }
+        }
+      }
+    },
+    "Green": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "绿"
+          }
+        }
+      }
+    },
+    "Guidance": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随方式"
+          }
+        }
+      }
+    },
+    "Height": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高度"
+          }
+        }
+      }
+    },
+    "Hide from Screen Sharing": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共享屏幕时隐藏"
+          }
+        }
+      }
+    },
+    "Hide the overlay from screen recordings and video calls.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录屏和视频会议里看不到提词。"
+          }
+        }
+      }
+    },
+    "Highlight Color": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字颜色"
+          }
+        }
+      }
+    },
+    "Horizontal": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左右"
+          }
+        }
+      }
+    },
+    "Horizontal Position": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左右位置"
+          }
+        }
+      }
+    },
+    "Horizontally flipped for use with a prompter mirror rig.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左右翻转，配合提词器反光镜使用。"
+          }
+        }
+      }
+    },
+    "Instant": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即"
+          }
+        }
+      }
+    },
+    "Keep Screen Awake": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保持屏幕常亮"
+          }
+        }
+      }
+    },
+    "Less transparent": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更不透明"
+          }
+        }
+      }
+    },
+    "Low": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "较暗"
+          }
+        }
+      }
+    },
+    "Makes the overlay see-through so desktop content shows through.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让提词背景半透明，能看到后面的桌面。"
+          }
+        }
+      }
+    },
+    "Max Speed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "推进速度上限"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中等"
+          }
+        }
+      }
+    },
+    "Microphone": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麦克风"
+          }
+        }
+      }
+    },
+    "Mirror": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "镜像"
+          }
+        }
+      }
+    },
+    "Mirror Axis": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "镜像方向"
+          }
+        }
+      }
+    },
+    "Mono": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等宽"
+          }
+        }
+      }
+    },
+    "More transparent": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更透明"
+          }
+        }
+      }
+    },
+    "Near Top": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靠上"
+          }
+        }
+      }
+    },
+    "Near Top keeps the previous line visible above the active line.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「靠上」会把上一行留在当前行的上方。"
+          }
+        }
+      }
+    },
+    "No external display output.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不在外接显示器上显示。"
+          }
+        }
+      }
+    },
+    "No external displays detected. Connect a display or enable Sidecar.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有检测到外接显示器。请连接显示器或打开随航。"
+          }
+        }
+      }
+    },
+    "Notch Anchor": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刘海锚点"
+          }
+        }
+      }
+    },
+    "Off": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        }
+      }
+    },
+    "Opacity": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不透明度"
+          }
+        }
+      }
+    },
+    "Orange": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "橙"
+          }
+        }
+      }
+    },
+    "Pagination": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分页"
+          }
+        }
+      }
+    },
+    "Pink": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粉"
+          }
+        }
+      }
+    },
+    "Pinned to Notch": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刘海多行"
+          }
+        }
+      }
+    },
+    "Port": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "端口"
+          }
+        }
+      }
+    },
+    "Press Esc to stop the teleprompter.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按 Esc 停止提词。"
+          }
+        }
+      }
+    },
+    "Prevent display and system sleep while the teleprompter is active.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提词时不让屏幕和电脑休眠。"
+          }
+        }
+      }
+    },
+    "Preview Words": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预读字数"
+          }
+        }
+      }
+    },
+    "Reading": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阅读"
+          }
+        }
+      }
+    },
+    "Reading Position": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阅读位置"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新"
+          }
+        }
+      }
+    },
+    "Remote": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页遥控"
+          }
+        }
+      }
+    },
+    "Reset": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置"
+          }
+        }
+      }
+    },
+    "Reset All": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部重置"
+          }
+        }
+      }
+    },
+    "Restart": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重启"
+          }
+        }
+      }
+    },
+    "Restart required after change": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修改后需要重启"
+          }
+        }
+      }
+    },
+    "Sans": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无衬线"
+          }
+        }
+      }
+    },
+    "Scan the QR code or open the URL with your iPhone, Android or TV browser on the same Wi-Fi network.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连在同一个 Wi-Fi 下，用 iPhone、安卓手机或电视的浏览器扫二维码，或者打开这个网址。"
+          }
+        }
+      }
+    },
+    "Scroll Speed": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滚动速度"
+          }
+        }
+      }
+    },
+    "Scrolls while you speak, pauses when you're silent.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说话时滚动，不说话就停下。"
+          }
+        }
+      }
+    },
+    "Separate source line breaks with extra space and three centered dots.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原稿换行的地方多留一点空，并用三个点隔开。"
+          }
+        }
+      }
+    },
+    "Serif": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "衬线"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
+          }
+        }
+      }
+    },
+    "Show Last Spoken Words": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示最近听到的话"
+          }
+        }
+      }
+    },
+    "Show Paragraph Dividers": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示段落分隔"
+          }
+        }
+      }
+    },
+    "Show the teleprompter on an external display or Sidecar iPad.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在外接显示器或随航的 iPad 上显示提词。"
+          }
+        }
+      }
+    },
+    "Size": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字号"
+          }
+        }
+      }
+    },
+    "Slower": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更慢"
+          }
+        }
+      }
+    },
+    "Speech Language": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语音语言"
+          }
+        }
+      }
+    },
+    "System Default": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统默认"
+          }
+        }
+      }
+    },
+    "Target Display": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标显示器"
+          }
+        }
+      }
+    },
+    "Teleprompter": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提词显示"
+          }
+        }
+      }
+    },
+    "The next word to read stays right under the camera.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一个要读的字固定在摄像头正下方。"
+          }
+        }
+      }
+    },
+    "The notch moves to whichever display your mouse is on.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鼠标在哪块屏幕上，提词就显示在哪块。"
+          }
+        }
+      }
+    },
+    "The notch stays on the selected display.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一直显示在选定的显示器上。"
+          }
+        }
+      }
+    },
+    "The window follows your cursor and sticks to its bottom-right.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口跟着鼠标走，贴在鼠标右下方。"
+          }
+        }
+      }
+    },
+    "This will restore all settings to their defaults.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有设置都会恢复成默认值。"
+          }
+        }
+      }
+    },
+    "Tracks each word you say and highlights it in real time.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟着你说的每个字实时往前走。"
+          }
+        }
+      }
+    },
+    "Transparency": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "半透明"
+          }
+        }
+      }
+    },
+    "Uses ports %@ (HTTP) and %@ (WebSocket).": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用端口 %1$@（HTTP）和 %2$@（WebSocket）。"
+          }
+        }
+      }
+    },
+    "Vertical": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上下"
+          }
+        }
+      }
+    },
+    "Voice-Activated": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有声才滚"
+          }
+        }
+      }
+    },
+    "White": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "白"
+          }
+        }
+      }
+    },
+    "Width": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "宽度"
+          }
+        }
+      }
+    },
+    "Word Tracking": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "逐字跟随"
+          }
+        }
+      }
+    },
+    "Word tracking is forced when the director starts reading.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导演开始读稿时，会自动切换到逐字跟随。"
+          }
+        }
+      }
+    },
+    "Yellow": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "黄"
+          }
+        }
+      }
+    },
+    "settings.preview.script": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大家早上好，谢谢大家今天来到这里。[微笑]\n\n今天我想讲一个简单的道理：把话说清楚，要从放慢速度、一次只对一个人说开始。字句重要，字句之间的停顿也一样重要。[停顿]\n\n深吸一口气，看着镜头，让每一句话都落地。[看镜头] 当我们平静、有目的地说话，再复杂的内容也会变得好懂。\n\n所以保持节奏，相信你要讲的故事，把话说完。谢谢大家。[点头]"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good morning, and thank you for being here. [smile]\n\nToday I want to share a simple idea: clear communication begins when we slow down and connect with one person at a time. The words matter, but the space between them matters too. [pause]\n\nTake a breath, look into the camera, and let each sentence land. [look at camera] When we speak with calm and purpose, even a complex message becomes easier to understand.\n\nSo keep your pace steady, trust the story, and bring the message home. Thank you for listening. [nod]"
+          }
+        }
+      }
+    }
+  }
+}

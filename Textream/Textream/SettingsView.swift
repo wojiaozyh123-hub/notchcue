@@ -164,7 +164,9 @@ struct NotchPreviewContent: View {
     let menuBarHeight: CGFloat
     let screen: NSScreen
 
-    private static let previewText = """
+    private static let previewText = String(
+        localized: "settings.preview.script",
+        defaultValue: """
     Good morning, and thank you for being here. [smile]
 
     Today I want to share a simple idea: clear communication begins when we slow down and connect with one person at a time. The words matter, but the space between them matters too. [pause]
@@ -173,6 +175,7 @@ struct NotchPreviewContent: View {
 
     So keep your pace steady, trust the story, and bring the message home. Thank you for listening. [nod]
     """
+    )
     private static let previewWords = splitTextIntoWords(previewText)
     private static let paragraphBreaks = paragraphBreakWordIndices(in: previewText)
     private static let wordTrackingAnchorWordIndex = 18
@@ -367,13 +370,13 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .appearance: return "Appearance"
-        case .guidance:   return "Guidance"
-        case .reading:    return "Reading"
-        case .teleprompter: return "Teleprompter"
-        case .external:   return "External"
-        case .browser:    return "Remote"
-        case .director:   return "Director"
+        case .appearance: return String(localized: "Appearance")
+        case .guidance:   return String(localized: "Guidance")
+        case .reading:    return String(localized: "Reading")
+        case .teleprompter: return String(localized: "Teleprompter")
+        case .external:   return String(localized: "External")
+        case .browser:    return String(localized: "Remote")
+        case .director:   return String(localized: "Director")
         }
     }
 
@@ -777,13 +780,13 @@ struct SettingsView: View {
         Divider()
 
         anchorSlider(
-            "字号",
+            "Font Size",
             value: $settings.anchorFontSize,
             range: NotchSettings.anchorFontSizeRange,
             readout: "\(Int(settings.anchorFontSize)) pt"
         )
         anchorSlider(
-            "预读字数",
+            "Preview Words",
             value: Binding(
                 get: { Double(settings.anchorPreviewCount) },
                 set: { settings.anchorPreviewCount = Int($0.rounded()) }
@@ -792,21 +795,21 @@ struct SettingsView: View {
             readout: "\(settings.anchorPreviewCount)"
         )
         anchorSlider(
-            "左右位置",
+            "Horizontal Position",
             value: $settings.anchorOffset,
             range: NotchSettings.anchorOffsetRange,
-            readout: settings.anchorOffset == 0 ? "居中" : String(format: "%+d pt", Int(settings.anchorOffset))
+            readout: settings.anchorOffset == 0 ? String(localized: "Centered") : String(format: "%+d pt", Int(settings.anchorOffset))
         )
         anchorSlider(
-            "推进速度上限",
+            "Max Speed",
             value: $settings.anchorMaxSpeed,
             range: NotchSettings.anchorMaxSpeedRange,
-            readout: "\(Int(settings.anchorMaxSpeed)) 字/秒"
+            readout: String(localized: "\(Int(settings.anchorMaxSpeed)) words/s")
         )
     }
 
     private func anchorSlider(
-        _ title: String,
+        _ title: LocalizedStringKey,
         value: Binding<Double>,
         range: ClosedRange<Double>,
         readout: String
@@ -856,7 +859,7 @@ struct SettingsView: View {
 
                     if ChineseAlignerConfig.forSpeechLocale(settings.speechLocale, fuzzyPinyin: false)?.pinyin.mandarin == true {
                         Toggle(isOn: $settings.fuzzyPinyin) {
-                            Text("模糊音（z/zh、c/ch、s/sh、n/l、an/ang、en/eng、in/ing）")
+                            Text("Fuzzy pinyin (z/zh, c/ch, s/sh, n/l, an/ang, en/eng, in/ing)")
                                 .font(.system(size: 13, weight: .medium))
                         }
                         .toggleStyle(.checkbox)
@@ -1259,7 +1262,7 @@ struct SettingsView: View {
                     screens: availableScreens,
                     selectedID: $settings.externalScreenID,
                     onRefresh: { refreshScreens() },
-                    emptyMessage: "No external displays detected. Connect a display or enable Sidecar."
+                    emptyMessage: String(localized: "No external displays detected. Connect a display or enable Sidecar.")
                 )
             }
             Spacer()
