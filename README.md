@@ -50,21 +50,7 @@
 3. 在「应用程序」里双击 NotchCue 打开。
 4. 第一次开始提词时，允许麦克风和语音识别权限。
 
-### 第一次打开被系统拦住怎么办
-
-app 已经用开发者证书签名，但 **Apple 公证还在审核中**，所以第一次打开时 macOS 会提示「Apple 无法验证 NotchCue 是否包含恶意软件」。这只需要放行一次，之后就能正常打开：
-
-1. 在提示框里点「**完成**」（不要点「移到废纸篓」）。
-2. 打开「**系统设置**」→「**隐私与安全性**」，往下翻到「安全性」那一栏，会看到「已阻止使用 NotchCue……」。
-3. 点它旁边的「**仍要打开**」，输入电脑密码确认，再在弹出的提示里点「**仍要打开**」。
-
-也可以在「终端」里运行下面这一行，效果一样：
-
-```bash
-xattr -dr com.apple.quarantine /Applications/NotchCue.app
-```
-
-公证通过后会换上公证版，到时候就不用这一步了。
+app 用开发者证书签名并通过了 Apple 公证。第一次打开时系统会问「是从互联网下载的 App，确定要打开吗？」，点「打开」就行。
 
 ### 从源码编译
 
@@ -138,4 +124,4 @@ xattr -dr com.apple.quarantine /Applications/NotchCue.app
 
 **NotchCue (提词器)** is a Chinese-first teleprompter for the MacBook notch, forked from [Textream](https://github.com/f/textream). In its anchor mode the next word to read always sits right under the camera while the rest of the script flows toward it, so your eyes stay on the lens. Speech following is rebuilt for Mandarin: matching by pinyin (homophones and common polyphones), spoken forms of numbers, mixed Chinese and English, ad-libs that don't move the cursor, and skipped sentences that are picked up again. Global shortcuts: ⌃⌥P pause, ⌃⌥← / ⌃⌥→ previous / next phrase. Other languages keep Textream's original follower unchanged.
 
-Download the DMG or ZIP from [Releases](https://github.com/wojiaozyh123-hub/notchcue/releases/latest) (macOS 15+, Apple silicon and Intel). The app is signed with Developer ID; Apple notarization is still pending, so on first launch choose Done, then System Settings → Privacy & Security → Open Anyway. Or build from source with Xcode 26: open `Textream/Textream.xcodeproj`, set your own signing team, run the **Textream** scheme. Alignment logic and its tests live in `Textream/Packages/PrompterCore` (`swift test`). MIT licensed, like Textream.
+Download the DMG or ZIP from [Releases](https://github.com/wojiaozyh123-hub/notchcue/releases/latest) (macOS 15+, Apple silicon and Intel). The app is signed with Developer ID and notarized by Apple. Or build from source with Xcode 26: open `Textream/Textream.xcodeproj`, set your own signing team, run the **Textream** scheme. Alignment logic and its tests live in `Textream/Packages/PrompterCore` (`swift test`). MIT licensed, like Textream.
